@@ -71,7 +71,7 @@ export default function CourseDetail(props: CourseDetailProps) {
       if (selectedCourseId !== -1) {
         setLoading(loading + 1);
         setCourseData(
-          (await axios.get(`/api-course-detail-chapter/${selectedCourseId}`)).data
+          (await axios.get(`/api-course-detail-chapters/${selectedCourseId}`)).data
         );
         setLoading(loading - 1);
       }
