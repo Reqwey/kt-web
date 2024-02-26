@@ -1,0 +1,46 @@
+{
+  "name": "kunter",
+  "private": true,
+  "version": "0.0.1",
+  "author": "Reqwey Lin<yreqwey@outlook.com>",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon -w src/server -x tsx src/server/main.ts",
+    "start": "cross-env NODE_ENV=production tsx src/server/main.ts",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.1",
+    "@mui/joy": "5.0.0-beta.19",
+    "@mui/material": "^5.15.4",
+    "@mui/x-tree-view": "^6.17.0",
+    "@types/body-parser": "^1.19.5",
+    "@types/cookie-parser": "^1.4.6",
+    "@types/react-router-dom": "^5.3.3",
+    "axios": "^1.6.7",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "dplayer": "^1.27.1",
+    "express": "^4.18.2",
+    "hls.js": "^1.4.14",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "tsx": "^4.3.0",
+    "typescript": "^5.3.2",
+    "vite-express": "*"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.9.3",
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.2.16",
+    "@vitejs/plugin-react": "^4.2.0",
+    "nodemon": "^3.0.1",
+    "vite": "^5.0.2"
+  }
+}
