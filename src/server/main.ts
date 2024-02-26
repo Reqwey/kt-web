@@ -67,9 +67,9 @@ app.post('/api-login', async (req: Request<{}, {}, LoginBody>, res: Response) =>
     });
   } catch (error: any) {
     console.log(error);
-    return res.status(500).json({
+    return res.json({
       posted: false,
-      reason: error.response?.data.reason || error.message,
+      reason: error.response?.data.detail || error.message,
     });
   }
 });

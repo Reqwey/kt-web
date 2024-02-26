@@ -161,7 +161,7 @@ export default function Login() {
                 event.preventDefault();
                 setLoading(true);
                 console.log(isLoading);
-                const {data} = await axios.post('/api-login', {username, password, sn})
+                const { data } = await axios.post('/api-login', { username, password, sn })
                 localStorage.setItem("sn", sn);
                 if (!data.posted) {
                   setLoading(false);
