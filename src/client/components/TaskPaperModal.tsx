@@ -144,7 +144,12 @@ const TaskPaperModal: React.FC<TaskPaperModalOptions> = (props) => {
       setData(
         !props.open
           ? ({} as PaperData)
-          : (await axios.get(`/api-paper/${props.paperId}`)).data
+          : (await axios.get(`/api-paper/${props.paperId}`, {
+            params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn')
+          }
+          })).data
       );
       setDataLoading(false);
     })();

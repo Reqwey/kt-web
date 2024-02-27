@@ -1,11 +1,20 @@
-import express, { Request, Response } from "express";
+import express, { Request, RequestHandler, Response } from "express";
 import ViteExpress from "vite-express";
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
+import { assert } from "console";
 
 dotenv.config();
+
+declare global {
+  namespace Express {
+    interface Request {
+      fetcher?: AxiosInstance;
+    }
+  }
+}
 
 const app = express();
 
@@ -13,60 +22,60 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
-interface Headers {
-  [key: string]: string;
-}
+const cookies: Map<string, string> = new Map();
 
-const HEADERS: Headers = {
-  "User-Agent": "saturn/2.3.0 (Android 7.0/LingChuang) 2.3.0-base",
-  "Content-Type": "application/json",
-  "app-version": "2.2.1",
-  version: "2.2.1",
-  uuid: Math.random().toString(36).slice(-8),
-  serial: "",
-  authorization: "",
-  Connection: "keep-alive",
-  "Accept-Encoding": "gzip, deflate",
-  "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+const useCookie: RequestHandler = (req, res, next) => {
+  const { username } = req.query;
+
+  const fetcher = axios.create();
+
+  fetcher.interceptors.request.use(
+    (config) => {
+      config.headers['User-Agent'] = "saturn/2.3.0 (Android 7.0/LingChuang) 2.3.0-base";
+      config.headers['Content-Type'] = "application/json";
+      config.headers['app-version'] = "2.2.1";
+      config.headers['version'] = "2.2.1";
+      config.headers['Connection'] = "keep-alive";
+      config.headers['serial'] = req.body.sn || req.query.sn || '';
+      if (req.query.token) config.headers['authorization'] = `jwt ${req.query.token}`;
+      config.headers['uuid'] = Math.random().toString(36).slice(-8);
+      if (username) config.headers['Cookie'] = cookies.get(username as string) || '';
+      console.log(config.headers);
+      return config;
+    },
+    (error) => {
+      console.log(error);
+      return Promise.reject(error);
+    }
+  );
+
+  // 将 Axios 实例挂载到 req 对象上
+  req.fetcher = fetcher;
+
+  next();
 };
 
-// 登录请求的体类型定义
-interface LoginBody {
-  username: string;
-  password: string;
-  sn: string;
-}
-
-// 处理登录的 API 路由
-app.post('/api-login', async (req: Request<{}, {}, LoginBody>, res: Response) => {
-  const { username, password, sn } = req.body;
-  console.log(req.body);
+app.post('/api-login', useCookie, async (req, res) => {
   try {
-    HEADERS['serial'] = sn;
-    console.log('fetching...');
-    const response = await axios.post(
+    const { username, password } = req.body;
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+
+    const response = await req.fetcher.post(
       'https://api.fuulea.com/v2/auth/student/login/',
-      { username, password },
-      { headers: HEADERS }
+      { username, password }
     );
 
-    HEADERS['authorization'] = `jwt ${response.data.token}`;
-    axios.interceptors.request.use(
-      function (config) {
-        config.headers.Cookie = response.headers["set-cookie"];
-        return config;
-      },
-      function (error) {
-        return Promise.reject(error);
-      }
-    );
-    console.log("logged in successfully.");
+    const setCookieHeader = response.headers["set-cookie"];
+    if (setCookieHeader) {
+      cookies.set(username, setCookieHeader.toString());
+    }
+
     return res.json({
       posted: true,
       data: response.data,
     });
   } catch (error: any) {
-    console.log(error);
+    // console.log(error.response || error.message);
     return res.json({
       posted: false,
       reason: error.response?.data.detail || error.message,
@@ -74,20 +83,20 @@ app.post('/api-login', async (req: Request<{}, {}, LoginBody>, res: Response) =>
   }
 });
 
-app.get('/api-unfinished-counts', async (req: Request, res: Response) => {
+
+app.get('/api-unfinished-counts', useCookie, async (req, res: Response) => {
   try {
-    const response = await axios.get(`https://api.fuulea.com/v2/tasks/usertasks/statis/`, {
-      headers: HEADERS,
-    });
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/tasks/usertasks/statis/`);
     console.log("unfinished-counts got successfully");
     res.json({ ...response.data, success: true });
   } catch (error: any) {
-    console.log("Error fetching unfinished counts:", error.message);
-    res.status(500).json({ subjects: [], success: false });
+    // console.log("Error fetching unfinished counts:", error.message);
+    res.json({ subjects: [], success: false });
   }
 });
 
-app.get('/api-task-list/:category', async (req: Request, res: Response) => {
+app.get('/api-task-list/:category', useCookie, async (req, res: Response) => {
   const { category } = req.params;
   const { page, subjectId, keyword } = req.query as { page: string; subjectId: string; keyword: string };
 
@@ -99,46 +108,47 @@ app.get('/api-task-list/:category', async (req: Request, res: Response) => {
       subjectId,
     });
 
-    const response = await axios.get(`https://api.fuulea.com/v2/tasks/usertasks/${category}`, {
-      headers: HEADERS,
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/tasks/usertasks/${category}`, {
       params: params,
     });
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-task-info/:taskId', async (req: Request, res: Response) => {
+app.get('/api-task-info/:taskId', useCookie, async (req, res: Response) => {
   const { taskId } = req.params;
 
   try {
-    const response = await axios.get(`https://api.fuulea.com/api/task/${taskId}/?`, {
-      headers: HEADERS,
-    });
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/api/task/${taskId}/?`);
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-paper/:paperId', async (req: Request, res: Response) => {
+app.get('/api-paper/:paperId', useCookie, async (req, res: Response) => {
   const { paperId } = req.params;
 
   try {
-    const response = await axios.get(`https://api.fuulea.com/v2/papers/${paperId}/`, {
-      headers: { ...HEADERS, authorization: "" },
-    });
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/papers/${paperId}/`);
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-courses/:mode', async (req: Request, res: Response) => {
+app.get('/api-courses/:mode', useCookie, async (req, res: Response) => {
   const { mode } = req.params;
 
   try {
@@ -147,87 +157,65 @@ app.get('/api-courses/:mode', async (req: Request, res: Response) => {
       pageSize: "100",
     });
 
-    const response = await axios.get(`https://api.fuulea.com/v2/courses/${mode}/`, {
-      headers: HEADERS,
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/courses/${mode}/`, {
       params: params,
     });
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-course-detail/:id', async (req: Request, res: Response) => {
+app.get('/api-course-detail/:id', useCookie, async (req, res: Response) => {
   const { id } = req.params;
 
   try {
-    const response = await axios.get(`https://api.fuulea.com/v2/courses/categories/${id}/`, {
-      headers: HEADERS,
-    });
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/courses/categories/${id}/`);
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-course-detail-chapters/:id', async (req: Request, res: Response) => {
+app.get('/api-course-detail-chapters/:id', useCookie, async (req, res: Response) => {
   const { id } = req.params;
 
   try {
-    const response = await axios.get(`https://api.fuulea.com/v2/courses/${id}/chapters`, {
-      headers: HEADERS,
-    });
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(`https://api.fuulea.com/v2/courses/${id}/chapters`);
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
+    console.log(error);
+    res.json([]);
   }
 });
 
-app.get('/api-course-detail-modules/:courseId/:chapterId', async (req: Request, res: Response) => {
+app.get('/api-course-detail-modules/:courseId/:chapterId', useCookie, async (req, res: Response) => {
   const { courseId, chapterId } = req.params;
 
   try {
-    const response = await axios.get(
-      `https://api.fuulea.com/v2/courses/${courseId}/chapters/${chapterId}/modules/?includeSystemModel`,
-      {
-        headers: HEADERS,
-      }
+    if (!req.fetcher) throw new Error('Fetcher is undefined');
+    const response = await req.fetcher.get(
+      `https://api.fuulea.com/v2/courses/${courseId}/chapters/${chapterId}/modules/?includeSystemModel`
     );
 
     res.json(response.data);
   } catch (error: any) {
-    res.status(500).json([]);
-  }
-});
-
-// Make sure you define error handling middleware if you want to capture 
-// and log or manipulate the responses for Axios errors or other errors.
-app.use((error: Error, req: Request, res: Response, next: Function) => {
-  // Here you can check if `error` is an instance of `AxiosError`
-  // and log it or return a custom response if you need to.
-  if (axios.isAxiosError(error)) {
-    // Handle Axios error
-    const err = error as AxiosError;
-    console.error('Axios error: ', err.response?.status, err.response?.data);
-    res.status(err.response?.status || 500).json({
-      message: err.message,
-      error: err.response?.data
-    });
-  } else {
-    // Generic error response
-    res.status(500).json({
-      message: error.message
-    });
+    console.log(error);
+    res.json([]);
   }
 });
 
 app.get("/hello", (_, res) => {
   res.send("Hello Vite + React + TypeScript!");
 });
-
 
 if (process.env.PORT && parseInt(process.env.PORT)) {
   ViteExpress.listen(app, parseInt(process.env.PORT), () =>

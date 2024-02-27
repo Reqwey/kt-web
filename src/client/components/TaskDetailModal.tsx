@@ -49,7 +49,13 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
       setData(
         !props.open
           ? { title: '', detail: [], unfinished_students: [] }
-          : (await axios.get(`/api-task-info/${props.taskId}`)).data
+          : (await axios.get(`/api-task-info/${props.taskId}`, {
+            params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+          })).data
       );
     })();
   }, [props]);

@@ -37,7 +37,13 @@ export default function CourseList(props: CourseListProps) {
   useEffect(() => {
     (async () => {
       setLoading(loading + 1);
-      setData((await axios.get(`/api-courses/categories`)).data);
+      setData((await axios.get(`/api-courses/categories`, {
+        params: {
+          username: localStorage.getItem('userName'),
+          sn: localStorage.getItem('sn'),
+          token: localStorage.getItem('token')
+        }
+      })).data);
       setLoading(loading - 1);
     })();
   }, []);
@@ -46,7 +52,13 @@ export default function CourseList(props: CourseListProps) {
     (async () => {
       if (drawerOpen) {
         setLoading(loading + 1);
-        setStudiedCoursesData((await axios.get(`/api-courses/mine`)).data);
+        setStudiedCoursesData((await axios.get(`/api-courses/mine`, {
+          params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+        })).data);
         console.log(studiedCoursesData);
         setLoading(loading - 1);
       }

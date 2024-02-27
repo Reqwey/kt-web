@@ -57,7 +57,13 @@ export default function CourseDetail(props: CourseDetailProps) {
     (async () => {
       setLoading(loading + 1);
       const data: CourseDetailData =
-        (await axios.get(`/api-course-detail/${id}`)).data;
+        (await axios.get(`/api-course-detail/${id}`, {
+          params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+        })).data;
       setData(data);
       setSelectedResultId(data.results[0].id);
       setSelectedCourseRanges(data.results[0].courses);
@@ -71,7 +77,13 @@ export default function CourseDetail(props: CourseDetailProps) {
       if (selectedCourseId !== -1) {
         setLoading(loading + 1);
         setCourseData(
-          (await axios.get(`/api-course-detail-chapters/${selectedCourseId}`)).data
+          (await axios.get(`/api-course-detail-chapters/${selectedCourseId}`, {
+            params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+          })).data
         );
         setLoading(loading - 1);
       }
@@ -83,7 +95,13 @@ export default function CourseDetail(props: CourseDetailProps) {
       if (selectedCourseId !== -1 && selectedChapter && selectedChapter.id) {
         setLoading(loading + 1);
         setModulesData(
-          (await axios.get(`/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}`)).data
+          (await axios.get(`/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}`, {
+            params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+          })).data
         );
         setModulesDrawerOpen(true);
         setLoading(loading - 1);

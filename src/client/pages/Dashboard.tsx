@@ -69,7 +69,14 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
       setLoading(true);
       if (pattern) {
         const { data } = await axios.get('/api-task-list/search', {
-          params: { page, subjectId: -1, keyword: pattern }
+          params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token'),
+            page,
+            subjectId: -1,
+            keyword: pattern
+          }
         });
         setData(data);
       } else {
@@ -335,7 +342,14 @@ export default function Dashboard() {
       setLoading(true);
       setData(
         (await axios.get(`/api-task-list/${category}`, {
-          params: { page, subjectId, keyword: "" }
+          params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token'),
+            page,
+            subjectId,
+            keyword: ""
+          }
         })).data
       );
       setLoading(false);

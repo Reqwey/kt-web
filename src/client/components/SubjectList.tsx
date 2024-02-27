@@ -20,7 +20,13 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
   React.useEffect(() => {
     const interval = setInterval(async () => {
       let data: SubjectListData =
-        (await axios.get('/api-unfinished-counts')).data;
+        (await axios.get('/api-unfinished-counts', {
+          params: {
+            username: localStorage.getItem('userName'),
+            sn: localStorage.getItem('sn'),
+            token: localStorage.getItem('token')
+          }
+        })).data;
       if (data.success) {
         setCounts(data);
         setTotalCount(
@@ -29,7 +35,7 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
           }, 0)
         );
       }
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -93,9 +99,9 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
                   display: "flex",
                   justifyContent:
                     counts &&
-                    counts.subjects.filter(
-                      (subject) => subject.subjectId === item.id
-                    ).length > 0
+                      counts.subjects.filter(
+                        (subject) => subject.subjectId === item.id
+                      ).length > 0
                       ? "space-between"
                       : "",
                 }}
