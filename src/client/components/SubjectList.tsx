@@ -5,7 +5,7 @@ import ListSubheader from "@mui/joy/ListSubheader";
 import ListItemButton from "@mui/joy/ListItemButton";
 import Chip from "@mui/joy/Chip";
 import { SubjectListData } from "../models/subject_list";
-import axios from "axios";
+import { useGetData } from "../methods/fetch_data";
 
 interface SubjectListProps {
   subjectId: number;
@@ -16,26 +16,30 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
   const { subjectId, setSubjectId } = props;
   const [counts, setCounts] = React.useState<SubjectListData>();
   const [totalCount, setTotalCount] = React.useState<number | null>(null);
+  const getData = useGetData();
 
   React.useEffect(() => {
     const interval = setInterval(async () => {
-      let data: SubjectListData =
-        (await axios.get('/api-unfinished-counts', {
-          params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token')
-          }
-        })).data;
-      if (data.success) {
-        setCounts(data);
+      let { response } = await getData("/api-unfinished-counts", {
+        params: {
+          username: localStorage.getItem("userName"),
+          sn: localStorage.getItem("sn"),
+          token: localStorage.getItem("token"),
+        },
+      });
+      if (response && response.success) {
+        console.log(response);
+        setCounts(response);
         setTotalCount(
-          data.subjects.reduce((accumulator, subject) => {
-            return accumulator + subject.unfinished;
-          }, 0)
+          (response as SubjectListData).subjects.reduce(
+            (accumulator, subject) => {
+              return accumulator + subject.unfinished;
+            },
+            0
+          )
         );
       }
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -99,9 +103,9 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
                   display: "flex",
                   justifyContent:
                     counts &&
-                      counts.subjects.filter(
-                        (subject) => subject.subjectId === item.id
-                      ).length > 0
+                    counts.subjects.filter(
+                      (subject) => subject.subjectId === item.id
+                    ).length > 0
                       ? "space-between"
                       : "",
                 }}

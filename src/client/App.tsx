@@ -15,6 +15,7 @@ import Courses from "./pages/Courses";
 import { ErrorBoundary } from "react-error-boundary";
 
 import "./App.css";
+import { TaskPaper } from "./pages/TaskPaper";
 
 const materialTheme = materialExtendTheme();
 
@@ -29,6 +30,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/paper/:paperId" element={<TaskPaper />} />
               <Route path="/courses" element={<Courses />} />
             </Routes>
           </Router>

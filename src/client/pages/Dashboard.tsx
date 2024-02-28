@@ -18,13 +18,14 @@ import {
   ModalClose,
   Typography,
   Divider,
+  Snackbar,
 } from "@mui/joy";
 
 import {
   ArrowBackIosNewRounded,
   ArrowForwardIosRounded,
   Logout,
-  Code,
+  Report,
   InfoOutlined,
   SearchRounded,
   DragIndicator,
@@ -42,6 +43,7 @@ import config from "../../../package.json";
 import LoadingModal from "../components/LoadingModal";
 import { TaskListData } from "../models/task_list";
 import axios from "axios";
+import { useGetData } from "../methods/fetch_data";
 
 interface SearchModalProps {
   open: boolean;
@@ -55,7 +57,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
   const [page, setPage] = useState(1);
   const [data, setData] = useState({
     results: [],
-    next: '' as any | null,
+    next: "" as any | null,
   });
   const [pattern, setPattern] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,15 +70,15 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
     (async () => {
       setLoading(true);
       if (pattern) {
-        const { data } = await axios.get('/api-task-list/search', {
+        const { data } = await axios.get("/api-task-list/search", {
           params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token'),
+            username: localStorage.getItem("userName"),
+            sn: localStorage.getItem("sn"),
+            token: localStorage.getItem("token"),
             page,
             subjectId: -1,
-            keyword: pattern
-          }
+            keyword: pattern,
+          },
         });
         setData(data);
       } else {
@@ -131,7 +133,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
             color={page == 1 ? "primary" : "primary"}
             variant="plain"
             size="sm"
-            startDecorator={<ArrowBackIosNewRounded />}
+            startDecorator={<ArrowBackIosNewRounded fontSize="small" />}
             onClick={() => {
               setPage(page - 1);
             }}
@@ -146,7 +148,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
             size="sm"
             color={!data.next ? "primary" : "primary"}
             variant="plain"
-            endDecorator={<ArrowForwardIosRounded />}
+            endDecorator={<ArrowForwardIosRounded fontSize="small" />}
             onClick={() => {
               setPage(page + 1);
             }}
@@ -323,6 +325,7 @@ const InfoModal = React.memo<InfoModalProps>((props) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const getData = useGetData();
   const [loading, setLoading] = useState(false);
   const [subjectId, setSubjectId] = useState(-1);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -340,18 +343,22 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      setData(
-        (await axios.get(`/api-task-list/${category}`, {
-          params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token'),
-            page,
-            subjectId,
-            keyword: ""
-          }
-        })).data
-      );
+      const { response, error } = await getData(`/api-task-list/${category}`, {
+        params: {
+          username: localStorage.getItem("userName"),
+          sn: localStorage.getItem("sn"),
+          token: localStorage.getItem("token"),
+          page,
+          subjectId,
+          keyword: "",
+        },
+      });
+      if (!error) {
+        setData(response);
+      } else {
+        setSnackContent(error as string);
+        setSnackOpen(true);
+      }
       setLoading(false);
     })();
   }, [category, page, subjectId]);
@@ -360,6 +367,8 @@ export default function Dashboard() {
     rightMinWidth = 200;
   const [leftWidth, setLeftWidth] = useState(300); // 初始左侧栏宽度
   const [isDragging, setIsDragging] = useState(false);
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackContent, setSnackContent] = useState("");
 
   const startDragging = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -390,20 +399,64 @@ export default function Dashboard() {
     setIsDragging(false);
   }, []);
 
+  const startTouchDrag = useCallback((event: TouchEvent) => {
+    setIsDragging(true);
+    event.preventDefault();
+  }, []);
+
+  const onTouchDrag = useCallback(
+    (event: TouchEvent) => {
+      if (isDragging && event.touches.length > 0) {
+        // 计算新的宽度
+        const newWidth = event.touches[0].clientX;
+        if (
+          newWidth >= leftMinWidth &&
+          newWidth <= window.innerWidth - rightMinWidth
+        ) {
+          setLeftWidth(newWidth);
+        }
+      }
+    },
+    [isDragging, leftMinWidth, rightMinWidth]
+  );
+
   useEffect(() => {
     // 监听 mousemove 和 mouseup 事件
     window.addEventListener("mousemove", onDrag);
     window.addEventListener("mouseup", stopDragging);
+    window.addEventListener("touchstart", startTouchDrag, {
+      passive: false,
+    });
+    window.addEventListener("touchmove", onTouchDrag, {
+      passive: false,
+    });
+    window.addEventListener("touchend", stopDragging);
 
     return () => {
       // 移除监听
       window.removeEventListener("mousemove", onDrag);
       window.removeEventListener("mouseup", stopDragging);
+      window.removeEventListener("touchstart", startTouchDrag);
+      window.removeEventListener("touchmove", onTouchDrag);
+      window.removeEventListener("touchend", stopDragging);
     };
-  }, [onDrag, stopDragging]);
+  }, [onDrag, stopDragging, startTouchDrag, onTouchDrag]);
 
   return (
     <>
+      <Snackbar
+        variant="soft"
+        color="danger"
+        autoHideDuration={5000}
+        open={snackOpen}
+        onClose={() => setSnackOpen(false)}
+        startDecorator={<Report fontSize="large" />}
+      >
+        <div>
+          <Typography level="title-lg">获取数据失败</Typography>
+          <Typography sx={{ mt: 1, mb: 2 }}>{snackContent}</Typography>
+        </div>
+      </Snackbar>
       <LoadingModal loading={loading} />
       <SearchModal
         open={searchModalOpen}
@@ -470,7 +523,7 @@ export default function Dashboard() {
                 variant="plain"
                 color="warning"
                 onClick={() => {
-                  navigate("/courses", { replace: true });
+                  navigate("/courses", { replace: false });
                 }}
               >
                 <LightbulbOutlined />

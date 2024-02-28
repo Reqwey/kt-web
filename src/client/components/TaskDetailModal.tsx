@@ -12,7 +12,7 @@ import Modal from '@mui/joy/Modal';
 import ModalDialog from '@mui/joy/ModalDialog';
 import Divider from '@mui/joy/Divider';
 
-import TaskPaperModal from './TaskPaperModal';
+// import TaskPaperModal from './TaskPaperModal';
 
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
@@ -23,6 +23,7 @@ import FullscreenExitIcon from '@mui/icons-material/FullscreenExit';
 import ArticleTwoToneIcon from '@mui/icons-material/ArticleTwoTone';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface TaskDetailModalOptions {
   open: boolean;
@@ -40,9 +41,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const [layout, setLayout] = React.useState(
     'center' as 'center' | 'fullscreen'
   );
-  const [paperOpen, setPaperOpen] = React.useState(false);
-  const [paperId, setPaperId] = React.useState(0);
   const [data, setData] = React.useState({ title: '', detail: [], unfinished_students: [], first_name: '' });
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     (async () => {
@@ -51,10 +51,10 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
           ? { title: '', detail: [], unfinished_students: [] }
           : (await axios.get(`/api-task-info/${props.taskId}`, {
             params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token')
-          }
+              username: localStorage.getItem('userName'),
+              sn: localStorage.getItem('sn'),
+              token: localStorage.getItem('token')
+            }
           })).data
       );
     })();
@@ -62,11 +62,6 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
 
   return (
     <>
-      <TaskPaperModal
-        open={paperOpen}
-        setOpen={setPaperOpen}
-        paperId={paperId}
-      />
       <Modal open={!!props.open}>
         <ModalDialog aria-labelledby="task-detail-modal-title" layout={layout}>
           <Box
@@ -211,10 +206,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                     <Button
                       variant="soft"
                       endDecorator={<ArrowForwardIcon />}
-                      onClick={() => {
-                        setPaperId(task.paper_id);
-                        setPaperOpen(true);
-                      }}
+                      onClick={() =>
+                        navigate(`/paper/${task.paper_id}`, { replace: true })
+                      }
                     >
                       进入任务
                     </Button>

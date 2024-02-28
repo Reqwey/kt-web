@@ -6,7 +6,8 @@ export interface Choice {
 }
 
 export interface ProblemTree {
-  id: string;
+  id: number;
+  paperQuestionId: number;
   no?: string;
   children: ProblemTree[];
   model: number;
@@ -29,4 +30,5 @@ export interface PaperData {
   apiSummary: string;
   questions: ProblemTree[];
   attachments: CourseAttachment[];
+  nonParentPaperQuestions: number[];
 }

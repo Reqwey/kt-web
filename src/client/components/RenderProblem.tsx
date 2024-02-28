@@ -30,19 +30,18 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
             item.children[item.children.length - 1].no
       }
       sx={{
-        borderTop: "1px solid var(--joy-palette-neutral-outlinedBorder)",
         width: "100%",
       }}
     >
       <Sheet variant="plain" sx={{ width: "100%" }}>
         <Typography
-          id={item.id}
+          id={item.id.toString()}
           mb={2}
           component="h4"
           endDecorator={
             <Link
               variant="outlined"
-              aria-labelledby={item.id}
+              aria-labelledby={item.id.toString()}
               href={"#" + item.id}
               fontSize="md"
               borderRadius="sm"

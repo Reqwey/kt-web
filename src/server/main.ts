@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 const cookies: Map<string, string> = new Map();
 
-const useCookie: RequestHandler = (req, res, next) => {
+const useHeaders: RequestHandler = (req, res, next) => {
   const { username } = req.query;
 
   const fetcher = axios.create();
@@ -40,7 +40,6 @@ const useCookie: RequestHandler = (req, res, next) => {
       if (req.query.token) config.headers['authorization'] = `jwt ${req.query.token}`;
       config.headers['uuid'] = Math.random().toString(36).slice(-8);
       if (username) config.headers['Cookie'] = cookies.get(username as string) || '';
-      console.log(config.headers);
       return config;
     },
     (error) => {
@@ -55,7 +54,7 @@ const useCookie: RequestHandler = (req, res, next) => {
   next();
 };
 
-app.post('/api-login', useCookie, async (req, res) => {
+app.post('/api-login', useHeaders, async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!req.fetcher) throw new Error('Fetcher is undefined');
@@ -84,7 +83,7 @@ app.post('/api-login', useCookie, async (req, res) => {
 });
 
 
-app.get('/api-unfinished-counts', useCookie, async (req, res: Response) => {
+app.get('/api-unfinished-counts', useHeaders, async (req, res: Response) => {
   try {
     if (!req.fetcher) throw new Error('Fetcher is undefined');
     const response = await req.fetcher.get(`https://api.fuulea.com/v2/tasks/usertasks/statis/`);
@@ -92,11 +91,11 @@ app.get('/api-unfinished-counts', useCookie, async (req, res: Response) => {
     res.json({ ...response.data, success: true });
   } catch (error: any) {
     // console.log("Error fetching unfinished counts:", error.message);
-    res.json({ subjects: [], success: false });
+    res.status(500).json({ subjects: [], success: false });
   }
 });
 
-app.get('/api-task-list/:category', useCookie, async (req, res: Response) => {
+app.get('/api-task-list/:category', useHeaders, async (req, res: Response) => {
   const { category } = req.params;
   const { page, subjectId, keyword } = req.query as { page: string; subjectId: string; keyword: string };
 
@@ -116,11 +115,11 @@ app.get('/api-task-list/:category', useCookie, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-task-info/:taskId', useCookie, async (req, res: Response) => {
+app.get('/api-task-info/:taskId', useHeaders, async (req, res: Response) => {
   const { taskId } = req.params;
 
   try {
@@ -130,25 +129,25 @@ app.get('/api-task-info/:taskId', useCookie, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-paper/:paperId', useCookie, async (req, res: Response) => {
+app.get('/api-paper/:paperId', useHeaders, async (req, res: Response) => {
   const { paperId } = req.params;
 
   try {
     if (!req.fetcher) throw new Error('Fetcher is undefined');
     const response = await req.fetcher.get(`https://api.fuulea.com/v2/papers/${paperId}/`);
-
+    console.log(response.data);
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-courses/:mode', useCookie, async (req, res: Response) => {
+app.get('/api-courses/:mode', useHeaders, async (req, res: Response) => {
   const { mode } = req.params;
 
   try {
@@ -165,11 +164,11 @@ app.get('/api-courses/:mode', useCookie, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-course-detail/:id', useCookie, async (req, res: Response) => {
+app.get('/api-course-detail/:id', useHeaders, async (req, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -179,11 +178,11 @@ app.get('/api-course-detail/:id', useCookie, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-course-detail-chapters/:id', useCookie, async (req, res: Response) => {
+app.get('/api-course-detail-chapters/:id', useHeaders, async (req, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -193,11 +192,11 @@ app.get('/api-course-detail-chapters/:id', useCookie, async (req, res: Response)
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
-app.get('/api-course-detail-modules/:courseId/:chapterId', useCookie, async (req, res: Response) => {
+app.get('/api-course-detail-modules/:courseId/:chapterId', useHeaders, async (req, res: Response) => {
   const { courseId, chapterId } = req.params;
 
   try {
@@ -209,7 +208,7 @@ app.get('/api-course-detail-modules/:courseId/:chapterId', useCookie, async (req
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(500).json([]);
   }
 });
 
