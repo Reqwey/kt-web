@@ -86,7 +86,7 @@ export default function Login() {
         navigate("/dashboard", { replace: true });
       }
     },
-    []
+    [username, password, sn]
   );
 
   return (
@@ -193,6 +193,7 @@ export default function Login() {
                   placeholder="码课用户名"
                   type="username"
                   name="username"
+                  value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
                   }}
@@ -207,6 +208,7 @@ export default function Login() {
                   placeholder="码课密码"
                   type="password"
                   name="password"
+                  value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                   }}
@@ -218,6 +220,7 @@ export default function Login() {
                   placeholder="通常可以在平板的背面或设置>关于本机>序列号获取"
                   type="sn"
                   name="sn"
+                  value={sn}
                   onChange={(e) => {
                     setSN(e.target.value);
                   }}

@@ -399,7 +399,7 @@ export default function Dashboard() {
     setIsDragging(false);
   }, []);
 
-  const startTouchDrag = useCallback((event: TouchEvent) => {
+  const startTouchDrag = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
     setIsDragging(true);
     event.preventDefault();
   }, []);
@@ -424,9 +424,6 @@ export default function Dashboard() {
     // 监听 mousemove 和 mouseup 事件
     window.addEventListener("mousemove", onDrag);
     window.addEventListener("mouseup", stopDragging);
-    window.addEventListener("touchstart", startTouchDrag, {
-      passive: false,
-    });
     window.addEventListener("touchmove", onTouchDrag, {
       passive: false,
     });
@@ -436,11 +433,10 @@ export default function Dashboard() {
       // 移除监听
       window.removeEventListener("mousemove", onDrag);
       window.removeEventListener("mouseup", stopDragging);
-      window.removeEventListener("touchstart", startTouchDrag);
       window.removeEventListener("touchmove", onTouchDrag);
       window.removeEventListener("touchend", stopDragging);
     };
-  }, [onDrag, stopDragging, startTouchDrag, onTouchDrag]);
+  }, [onDrag, stopDragging, onTouchDrag]);
 
   return (
     <>
@@ -562,6 +558,7 @@ export default function Dashboard() {
         </Box>
         <Box
           onMouseDown={startDragging}
+          onTouchStart={startTouchDrag}
           color="primary"
           sx={{
             width: "15px",
