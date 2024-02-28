@@ -21,10 +21,10 @@ import {
   Stack,
   Typography,
 } from "@mui/joy";
-import TaskPaperModal from "./TaskPaperModal";
 import { useState } from "react";
 import VideoPlayerModal from "./VideoPlayerModal";
 import { CourseAttachment, CourseModule } from "../models/course";
+import { useNavigate } from "react-router-dom";
 
 interface CourseModulesDrawerProps {
   moduleName: string | undefined;
@@ -107,10 +107,9 @@ export const AttachmentList: React.FC<AttachmentListProps> = (props) => {
 
 export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
   const { moduleName, data, open, setOpen } = props;
-  const [paperOpen, setPaperOpen] = useState(false);
-  const [paperId, setPaperId] = useState(-1);
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const navigate = useNavigate();
   console.log(data);
 
   return (
@@ -119,11 +118,6 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
         open={videoOpen}
         setOpen={setVideoOpen}
         videoUrl={videoUrl}
-      />
-      <TaskPaperModal
-        open={paperOpen}
-        setOpen={setPaperOpen}
-        paperId={paperId}
       />
       <Drawer size="lg" open={open} onClose={() => setOpen(false)}>
         <ModalClose />
@@ -286,10 +280,13 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
                           </div>
                           <Button
                             variant="soft"
-                            onClick={() => {
-                              item.paper && setPaperId(item.paper.id);
-                              setPaperOpen(true);
-                            }}
+                            onClick={() =>
+                              item.paper &&
+                              item.paper.id &&
+                              navigate(`/paper/${item.paper.id}`, {
+                                replace: true,
+                              })
+                            }
                             endDecorator={<ArrowForward />}
                             sx={{
                               ml: "auto",
