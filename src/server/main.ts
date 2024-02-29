@@ -91,7 +91,7 @@ app.get('/api-unfinished-counts', useHeaders, async (req, res: Response) => {
     res.json({ ...response.data, success: true });
   } catch (error: any) {
     // console.log("Error fetching unfinished counts:", error.message);
-    res.status(500).json({ subjects: [], success: false });
+    res.json({ subjects: [], success: false });
   }
 });
 
@@ -115,7 +115,7 @@ app.get('/api-task-list/:category', useHeaders, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -129,7 +129,7 @@ app.get('/api-task-info/:taskId', useHeaders, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -143,7 +143,7 @@ app.get('/api-paper/:paperId', useHeaders, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -164,7 +164,7 @@ app.get('/api-courses/:mode', useHeaders, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -178,7 +178,7 @@ app.get('/api-course-detail/:id', useHeaders, async (req, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -192,7 +192,7 @@ app.get('/api-course-detail-chapters/:id', useHeaders, async (req, res: Response
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 
@@ -208,7 +208,7 @@ app.get('/api-course-detail-modules/:courseId/:chapterId', useHeaders, async (re
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.status(500).json([]);
+    res.json([]);
   }
 });
 

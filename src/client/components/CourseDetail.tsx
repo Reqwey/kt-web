@@ -14,6 +14,7 @@ import {
   DialogContent,
   Drawer,
   ModalClose,
+  Skeleton,
 } from "@mui/joy";
 import {
   BookTwoTone,
@@ -27,6 +28,8 @@ import CourseChapter from "./CourseChapter";
 import CourseModulesDrawer from "./CourseModulesDrawer";
 import { CourseDetailData, Course } from "../models/course";
 import axios from "axios";
+import { useGetData } from "../methods/fetch_data";
+import MySuspense from "./MySuspense";
 
 interface CourseDetailProps {
   id: string;
@@ -41,7 +44,9 @@ export default function CourseDetail(props: CourseDetailProps) {
   const { id, title, cover, setCourseId, setCourseTitle, setCourseCover } =
     props;
   const [data, setData] = useState<CourseDetailData>();
-  const [loading, setLoading] = useState(0);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [treeLoading, setTreeLoading] = useState(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedResultId, setSelectedResultId] = useState(-1);
   const [selectedCourseRanges, setSelectedCourseRanges] = useState<Course[]>(
@@ -52,62 +57,84 @@ export default function CourseDetail(props: CourseDetailProps) {
   const [selectedChapter, setSelectedChapter] = useState<any>({});
   const [modulesData, setModulesData] = useState<any[]>([]);
   const [modulesDrawerOpen, setModulesDrawerOpen] = useState(false);
+  const getData = useGetData();
 
   useEffect(() => {
     (async () => {
-      setLoading(loading + 1);
-      const data: CourseDetailData =
-        (await axios.get(`/api-course-detail/${id}`, {
-          params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token')
-          }
-        })).data;
-      setData(data);
-      setSelectedResultId(data.results[0].id);
-      setSelectedCourseRanges(data.results[0].courses);
-      setSelectedCourseId(data.results[0].courses[0].id);
-      setLoading(loading - 1);
+      setPageLoading(true);
+      const { response, error } = await getData(`/api-course-detail/${id}`, {
+        params: {
+          username: localStorage.getItem("userName"),
+          sn: localStorage.getItem("sn"),
+          token: localStorage.getItem("token"),
+        },
+      });
+      if (!error) {
+        setData(response);
+        setSelectedResultId(response.results[0].id);
+        setSelectedCourseRanges(response.results[0].courses);
+        setSelectedCourseId(response.results[0].courses[0].id);
+      }
+      setPageLoading(false);
     })();
-  }, []);
+  }, [
+    setPageLoading,
+    setData,
+    setSelectedResultId,
+    setSelectedCourseRanges,
+    setSelectedCourseId,
+  ]);
 
   useEffect(() => {
     (async () => {
       if (selectedCourseId !== -1) {
-        setLoading(loading + 1);
-        setCourseData(
-          (await axios.get(`/api-course-detail-chapters/${selectedCourseId}`, {
+        setTreeLoading(true);
+        const { response, error } = await getData(
+          `/api-course-detail-chapters/${selectedCourseId}`,
+          {
             params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token')
+              username: localStorage.getItem("userName"),
+              sn: localStorage.getItem("sn"),
+              token: localStorage.getItem("token"),
+            },
           }
-          })).data
         );
-        setLoading(loading - 1);
+        if (!error) {
+          setCourseData(response);
+        }
+        setTreeLoading(false);
       }
     })();
-  }, [selectedCourseId]);
+  }, [selectedCourseId, setTreeLoading, setCourseData]);
 
   useEffect(() => {
     (async () => {
       if (selectedCourseId !== -1 && selectedChapter && selectedChapter.id) {
-        setLoading(loading + 1);
-        setModulesData(
-          (await axios.get(`/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}`, {
-            params: {
-            username: localStorage.getItem('userName'),
-            sn: localStorage.getItem('sn'),
-            token: localStorage.getItem('token')
-          }
-          })).data
-        );
         setModulesDrawerOpen(true);
-        setLoading(loading - 1);
+        setDrawerLoading(true);
+        const { response, error } = await getData(
+          `/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}`,
+          {
+            params: {
+              username: localStorage.getItem("userName"),
+              sn: localStorage.getItem("sn"),
+              token: localStorage.getItem("token"),
+            },
+          }
+        );
+        if (!error) {
+          setModulesData(response);
+        }
+        setDrawerLoading(false);
       }
     })();
-  }, [selectedCourseId, selectedChapter]);
+  }, [
+    selectedCourseId,
+    selectedChapter,
+    setDrawerLoading,
+    setModulesData,
+    setModulesDrawerOpen,
+  ]);
 
   return (
     <Box
@@ -178,7 +205,7 @@ export default function CourseDetail(props: CourseDetailProps) {
           选择版本
         </Button>
       </Box>
-      <LoadingModal loading={loading > 0} />
+      <LoadingModal loading={pageLoading} />
       <Drawer
         anchor="right"
         open={drawerOpen}
@@ -217,6 +244,7 @@ export default function CourseDetail(props: CourseDetailProps) {
         </DialogContent>
       </Drawer>
       <CourseModulesDrawer
+        loading={drawerLoading}
         moduleName={selectedChapter.title}
         data={modulesData}
         open={modulesDrawerOpen}
@@ -326,7 +354,12 @@ export default function CourseDetail(props: CourseDetailProps) {
             }}
             variant="soft"
           >
-            <CourseChapter data={courseData} handleClick={setSelectedChapter} />
+            <MySuspense loading={treeLoading}>
+              <CourseChapter
+                data={courseData}
+                handleClick={setSelectedChapter}
+              />
+            </MySuspense>
           </Sheet>
         </Grid>
       </Grid>

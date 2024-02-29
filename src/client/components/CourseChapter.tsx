@@ -1,8 +1,20 @@
 import * as React from "react";
 
-import { TreeItem, TreeItemProps, TreeView, treeItemClasses } from "@mui/x-tree-view";
+import {
+  TreeItem,
+  TreeItemProps,
+  TreeView,
+  treeItemClasses,
+} from "@mui/x-tree-view";
 import { ChevronRight, ExpandMore, MenuBook } from "@mui/icons-material";
 import { styled } from "@mui/material";
+import {
+  experimental_extendTheme as materialExtendTheme,
+  Experimental_CssVarsProvider as MaterialCssVarsProvider,
+  THEME_ID as MATERIAL_THEME_ID,
+} from "@mui/material/styles";
+
+const materialTheme = materialExtendTheme();
 
 interface CourseChapterProps {
   data: RenderTree[];
@@ -19,24 +31,26 @@ interface RenderTree {
 const CustomTreeItem = React.forwardRef(
   (props: TreeItemProps, ref: React.Ref<HTMLLIElement>) => (
     <TreeItem {...props} ref={ref} />
-  ),
+  )
 );
 
 const StyledTreeItem = styled(CustomTreeItem)(() => ({
   [`& .${treeItemClasses.iconContainer}`]: {
-    '& .close': {
+    "& .close": {
       opacity: 0.3,
     },
   },
   [`& .${treeItemClasses.content}`]: {
     padding: 7.5,
     margin: 7.5,
-    borderRadius: 'var(--joy-radius-md)'
+    borderRadius: "var(--joy-radius-md)",
   },
   [`& .${treeItemClasses.selected}`]: {
-    backgroundColor: 'var(--variant-solidBg, var(--joy-palette-primary-solidBg, var(--joy-palette-primary-500, #0B6BCB))) !important',
-    color: 'var(--variant-solidColor, var(--joy-palette-primary-solidColor, var(--joy-palette-common-white, #FFF))) !important'
-  }
+    backgroundColor:
+      "var(--variant-solidBg, var(--joy-palette-primary-solidBg, var(--joy-palette-primary-500, #0B6BCB))) !important",
+    color:
+      "var(--variant-solidColor, var(--joy-palette-primary-solidColor, var(--joy-palette-common-white, #FFF))) !important",
+  },
 }));
 
 const CourseChapter = React.memo<CourseChapterProps>(
@@ -58,12 +72,14 @@ const CourseChapter = React.memo<CourseChapterProps>(
     };
 
     return (
-      <TreeView
-        defaultCollapseIcon={<ExpandMore />}
-        defaultExpandIcon={<ChevronRight />}
-      >
-        {renderTree(data)}
-      </TreeView>
+      <MaterialCssVarsProvider theme={{ [MATERIAL_THEME_ID]: materialTheme }}>
+        <TreeView
+          defaultCollapseIcon={<ExpandMore />}
+          defaultExpandIcon={<ChevronRight />}
+        >
+          {renderTree(data)}
+        </TreeView>
+      </MaterialCssVarsProvider>
     );
   }
 );

@@ -29,7 +29,7 @@ import { useGetData } from "../methods/fetch_data";
 export function TaskPaper() {
   const [dataLoading, setDataLoading] = useState(false);
   const [data, setData] = useState<PaperData>({} as PaperData);
-  const [nonParentQuestions, setNonParantQuestions] = useState<ProblemTree[]>(
+  const [flattenedQuestions, setFlattenedQuestions] = useState<ProblemTree[]>(
     []
   );
   const [videoOpen, setVideoOpen] = useState(false);
@@ -52,11 +52,12 @@ export function TaskPaper() {
         if (!error && response) {
           console.log(response);
           setData(response as PaperData);
-          const tmpArr = (response as PaperData).nonParentPaperQuestions;
-          setNonParantQuestions(
-            (response as PaperData).questions.filter((x) =>
-              tmpArr.includes(x.paperQuestionId)
-            )
+          setFlattenedQuestions(
+            (response as PaperData).questions
+              .map((x) => {
+                return x.children ? [x, ...x.children] : x;
+              })
+              .flat()
           );
         } else {
           console.log(error);
@@ -85,7 +86,7 @@ export function TaskPaper() {
             {data.apiSummary}
           </Alert>
           <List>
-            {nonParentQuestions.map((question) => (
+            {flattenedQuestions.map((question) => (
               <ListItem key={question.id}>
                 <Link
                   key={question.id}
@@ -97,7 +98,11 @@ export function TaskPaper() {
                   sx={{ width: "100%", p: 1, borderRadius: "md" }}
                   onClick={() => setDrawerOpen(false)}
                 >
-                  {question.no + "."}
+                  {question.no
+                    ? question.no
+                    : question.children[0].no +
+                      "~" +
+                      question.children[question.children.length - 1].no}.
                   <Chip variant="soft" color="primary" size="sm" sx={{ mx: 1 }}>
                     {question.modelName}
                   </Chip>

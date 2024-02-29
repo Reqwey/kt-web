@@ -18,6 +18,7 @@ import {
   List,
   ListItem,
   ModalClose,
+  Skeleton,
   Stack,
   Typography,
 } from "@mui/joy";
@@ -25,8 +26,10 @@ import { useState } from "react";
 import VideoPlayerModal from "./VideoPlayerModal";
 import { CourseAttachment, CourseModule } from "../models/course";
 import { useNavigate } from "react-router-dom";
+import MySuspense from "./MySuspense";
 
 interface CourseModulesDrawerProps {
+  loading: boolean;
   moduleName: string | undefined;
   data: CourseModule[];
   open: boolean;
@@ -106,11 +109,10 @@ export const AttachmentList: React.FC<AttachmentListProps> = (props) => {
 };
 
 export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
-  const { moduleName, data, open, setOpen } = props;
+  const { loading, moduleName, data, open, setOpen } = props;
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const navigate = useNavigate();
-  console.log(data);
 
   return (
     <>
@@ -123,187 +125,195 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
         <ModalClose />
         <DialogTitle>{moduleName}</DialogTitle>
         <DialogContent>
-          <List>
-            {data.map((item) => (
-              <ListItem key={item.id}>
-                <Card sx={{ width: "100%", boxShadow: "md" }}>
-                  {item.type === 1 ? (
-                    <Accordion>
-                      <AccordionSummary>
-                        <Typography
-                          level="title-lg"
-                          endDecorator={
-                            <Chip
-                              variant="outlined"
-                              color={
-                                item.evolve.finished ? "success" : "danger"
+          <MySuspense loading={loading}>
+            {!loading && (
+              <List>
+                {data.map((item) => (
+                  <ListItem key={item.id}>
+                    <Card sx={{ width: "100%", boxShadow: "md" }}>
+                      {item.type === 1 ? (
+                        <Accordion>
+                          <AccordionSummary>
+                            <Typography
+                              level="title-lg"
+                              endDecorator={
+                                <Chip
+                                  variant="outlined"
+                                  color={
+                                    item.evolve.finished ? "success" : "danger"
+                                  }
+                                >
+                                  {item.evolve.finished
+                                    ? item.evolve.correctPercent
+                                      ? item.evolve.correctPercent + "%"
+                                      : "已完成"
+                                    : "未完成"}
+                                </Chip>
                               }
                             >
-                              {item.evolve.finished
-                                ? item.evolve.correctPercent
-                                  ? item.evolve.correctPercent + "%"
-                                  : "已完成"
-                                : "未完成"}
-                            </Chip>
-                          }
-                        >
-                          {item.title}
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails
-                        sx={{ width: "100%", overflow: "auto" }}
-                      >
-                        {item.attachments.length > 0 && (
-                          <AttachmentList attachments={item.attachments} />
-                        )}
-                        <div
-                          style={{ width: "100%" }}
-                          dangerouslySetInnerHTML={{ __html: item.description }}
-                        ></div>
-                        {item.videos.length > 0 && (
-                          <Grid
-                            container
-                            spacing={{ xs: 2, md: 3 }}
-                            columns={{ xs: 2, sm: 4, md: 8 }}
-                            sx={{ flexGrow: 1 }}
+                              {item.title}
+                            </Typography>
+                          </AccordionSummary>
+                          <AccordionDetails
+                            sx={{ width: "100%", overflow: "auto" }}
                           >
-                            {item.videos.map((v) => (
-                              <Grid xs={2} sm={4} md={4} key={v.id}>
-                                <Card
-                                  sx={{
-                                    height: "min-content",
-                                    cursor: "pointer",
-                                    "&:hover": {
-                                      boxShadow: "md",
-                                      borderColor:
-                                        "neutral.outlinedHoverBorder",
-                                    },
-                                    bgcolor: "initial",
-                                    p: 0,
-                                  }}
-                                  onClick={() => {
-                                    setVideoUrl(v.video);
-                                    setVideoOpen(true);
-                                  }}
-                                >
-                                  <Box sx={{ position: "relative" }}>
-                                    <AspectRatio ratio="3/2">
-                                      <figure>
-                                        <img
-                                          src={v.cover}
-                                          srcSet={v.cover}
-                                          loading="lazy"
-                                          alt={v.title}
-                                        />
-                                      </figure>
-                                    </AspectRatio>
-                                    <CardCover
+                            {item.attachments.length > 0 && (
+                              <AttachmentList attachments={item.attachments} />
+                            )}
+                            <div
+                              style={{ width: "100%" }}
+                              dangerouslySetInnerHTML={{
+                                __html: item.description,
+                              }}
+                            ></div>
+                            {item.videos.length > 0 && (
+                              <Grid
+                                container
+                                spacing={{ xs: 2, md: 3 }}
+                                columns={{ xs: 2, sm: 4, md: 8 }}
+                                sx={{ flexGrow: 1 }}
+                              >
+                                {item.videos.map((v) => (
+                                  <Grid xs={2} sm={4} md={4} key={v.id}>
+                                    <Card
                                       sx={{
-                                        opacity: 1,
-                                        transition: "0.1s ease-in",
-                                        background:
-                                          "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                                        height: "min-content",
+                                        cursor: "pointer",
+                                        "&:hover": {
+                                          boxShadow: "md",
+                                          borderColor:
+                                            "neutral.outlinedHoverBorder",
+                                        },
+                                        bgcolor: "initial",
+                                        p: 0,
+                                      }}
+                                      onClick={() => {
+                                        setVideoUrl(v.video);
+                                        setVideoOpen(true);
                                       }}
                                     >
-                                      <div>
-                                        <Box
+                                      <Box sx={{ position: "relative" }}>
+                                        <AspectRatio ratio="3/2">
+                                          <figure>
+                                            <img
+                                              src={v.cover}
+                                              srcSet={v.cover}
+                                              loading="lazy"
+                                              alt={v.title}
+                                            />
+                                          </figure>
+                                        </AspectRatio>
+                                        <CardCover
                                           sx={{
-                                            p: 2,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
+                                            opacity: 1,
+                                            transition: "0.1s ease-in",
+                                            background:
+                                              "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
                                           }}
                                         >
-                                          <PlayArrowRounded
-                                            sx={{
-                                              color: "#fff",
-                                              fontSize: "70px",
-                                              bgcolor: "rgba(0 0 0 / 0.2)",
-                                              borderRadius: "lg",
-                                            }}
-                                          />
-                                        </Box>
-                                      </div>
-                                    </CardCover>
-                                  </Box>
-                                  <Typography
-                                    level="body-lg"
-                                    fontWeight="lg"
-                                    sx={{
-                                      p: 2,
-                                      mt: -9,
-                                      zIndex: 114514,
-                                      color: "#fff",
-                                      whiteSpace: "nowrap",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                    }}
-                                  >
-                                    {v.title}
-                                  </Typography>
-                                </Card>
+                                          <div>
+                                            <Box
+                                              sx={{
+                                                p: 2,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                              }}
+                                            >
+                                              <PlayArrowRounded
+                                                sx={{
+                                                  color: "#fff",
+                                                  fontSize: "70px",
+                                                  bgcolor: "rgba(0 0 0 / 0.2)",
+                                                  borderRadius: "lg",
+                                                }}
+                                              />
+                                            </Box>
+                                          </div>
+                                        </CardCover>
+                                      </Box>
+                                      <Typography
+                                        level="body-lg"
+                                        fontWeight="lg"
+                                        sx={{
+                                          p: 2,
+                                          mt: -9,
+                                          zIndex: 114514,
+                                          color: "#fff",
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis",
+                                        }}
+                                      >
+                                        {v.title}
+                                      </Typography>
+                                    </Card>
+                                  </Grid>
+                                ))}
                               </Grid>
-                            ))}
-                          </Grid>
-                        )}
-                      </AccordionDetails>
-                    </Accordion>
-                  ) : (
-                    <>
-                      <Typography
-                        level="title-lg"
-                        endDecorator={
-                          <Chip
-                            variant="outlined"
-                            color={item.evolve.finished ? "success" : "danger"}
-                          >
-                            {item.evolve.finished
-                              ? item.evolve.correctPercent
-                                ? item.evolve.correctPercent + "%"
-                                : "已完成"
-                              : "未完成"}
-                          </Chip>
-                        }
-                      >
-                        {item.title}
-                      </Typography>
-                      {item.paper && (
-                        <CardContent
-                          orientation="horizontal"
-                          sx={{ width: "100%" }}
-                        >
-                          <div>
-                            <Typography level="body-xs">总分:</Typography>
-                            <Typography fontSize="lg" fontWeight="lg">
-                              {item.paper.totalScore}
-                            </Typography>
-                          </div>
-                          <Button
-                            variant="soft"
-                            onClick={() =>
-                              item.paper &&
-                              item.paper.id &&
-                              navigate(`/paper/${item.paper.id}`, {
-                                replace: true,
-                              })
+                            )}
+                          </AccordionDetails>
+                        </Accordion>
+                      ) : (
+                        <>
+                          <Typography
+                            level="title-lg"
+                            endDecorator={
+                              <Chip
+                                variant="outlined"
+                                color={
+                                  item.evolve.finished ? "success" : "danger"
+                                }
+                              >
+                                {item.evolve.finished
+                                  ? item.evolve.correctPercent
+                                    ? item.evolve.correctPercent + "%"
+                                    : "已完成"
+                                  : "未完成"}
+                              </Chip>
                             }
-                            endDecorator={<ArrowForward />}
-                            sx={{
-                              ml: "auto",
-                              alignSelf: "center",
-                              fontWeight: 600,
-                            }}
                           >
-                            进入任务
-                          </Button>
-                        </CardContent>
+                            {item.title}
+                          </Typography>
+                          {item.paper && (
+                            <CardContent
+                              orientation="horizontal"
+                              sx={{ width: "100%" }}
+                            >
+                              <div>
+                                <Typography level="body-xs">总分:</Typography>
+                                <Typography fontSize="lg" fontWeight="lg">
+                                  {item.paper.totalScore}
+                                </Typography>
+                              </div>
+                              <Button
+                                variant="soft"
+                                onClick={() =>
+                                  item.paper &&
+                                  item.paper.id &&
+                                  navigate(`/paper/${item.paper.id}`, {
+                                    replace: true,
+                                  })
+                                }
+                                endDecorator={<ArrowForward />}
+                                sx={{
+                                  ml: "auto",
+                                  alignSelf: "center",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                进入任务
+                              </Button>
+                            </CardContent>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-                </Card>
-              </ListItem>
-            ))}
-          </List>
+                    </Card>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </MySuspense>
         </DialogContent>
       </Drawer>
     </>

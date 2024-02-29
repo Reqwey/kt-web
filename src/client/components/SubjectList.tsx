@@ -12,10 +12,20 @@ interface SubjectListProps {
   setSubjectId(value: number): void;
 }
 
+const calcCount = (data: SubjectListData) =>
+  data.subjects.reduce((accumulator, subject) => {
+    return accumulator + subject.unfinished;
+  }, 0);
+
 const SubjectList: React.FC<SubjectListProps> = (props) => {
   const { subjectId, setSubjectId } = props;
-  const [counts, setCounts] = React.useState<SubjectListData>();
-  const [totalCount, setTotalCount] = React.useState<number | null>(null);
+  const fromStorage = localStorage.getItem("subjectCounts");
+  const [counts, setCounts] = React.useState<SubjectListData>(
+    fromStorage ? JSON.parse(fromStorage) : { subjects: [] }
+  );
+  const [totalCount, setTotalCount] = React.useState<number>(
+    fromStorage ? calcCount(JSON.parse(fromStorage)) : 0
+  );
   const getData = useGetData();
 
   React.useEffect(() => {
@@ -28,18 +38,11 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
         },
       });
       if (response && response.success) {
-        console.log(response);
         setCounts(response);
-        setTotalCount(
-          (response as SubjectListData).subjects.reduce(
-            (accumulator, subject) => {
-              return accumulator + subject.unfinished;
-            },
-            0
-          )
-        );
+        localStorage.setItem("subjectCounts", JSON.stringify(response));
+        setTotalCount(calcCount(response as SubjectListData));
       }
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -76,7 +79,7 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
             }}
           >
             {"全部学科"}
-            {totalCount && (
+            {totalCount > 0 && (
               <Chip size="sm" variant="solid" color="danger">
                 {formatCount(totalCount)}
               </Chip>

@@ -31,12 +31,12 @@ export default function CourseList(props: CourseListProps) {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [studiedCoursesData, setStudiedCoursesData] = useState<MyCoursesData>();
-  const [loading, setLoading] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
-      setLoading(loading + 1);
+      setLoading(true);
       setData((await axios.get(`/api-courses/categories`, {
         params: {
           username: localStorage.getItem('userName'),
@@ -44,14 +44,14 @@ export default function CourseList(props: CourseListProps) {
           token: localStorage.getItem('token')
         }
       })).data);
-      setLoading(loading - 1);
+      setLoading(false);
     })();
-  }, []);
+  }, [setLoading, setData]);
 
   useEffect(() => {
     (async () => {
       if (drawerOpen) {
-        setLoading(loading + 1);
+        setLoading(true);
         setStudiedCoursesData((await axios.get(`/api-courses/mine`, {
           params: {
             username: localStorage.getItem('userName'),
@@ -59,11 +59,10 @@ export default function CourseList(props: CourseListProps) {
             token: localStorage.getItem('token')
           }
         })).data);
-        console.log(studiedCoursesData);
-        setLoading(loading - 1);
+        setLoading(false);
       }
     })();
-  }, [drawerOpen]);
+  }, [setLoading, drawerOpen]);
 
   return (
     <Box
@@ -132,7 +131,7 @@ export default function CourseList(props: CourseListProps) {
           学习记录
         </Button>
       </Box>
-      <LoadingModal loading={loading > 0} />
+      <LoadingModal loading={loading} />
       <Drawer
         anchor="right"
         open={drawerOpen}

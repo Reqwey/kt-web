@@ -61,7 +61,6 @@ export default function Login() {
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       setLoading(true);
-      console.log({ username, password, sn });
       const { response, error } = await postData("/api-login", {
         username,
         password,
@@ -70,10 +69,8 @@ export default function Login() {
       localStorage.setItem("sn", sn);
       if (error || !response.posted) {
         setLoading(false);
-        console.log(isLoading);
         setErrorMessage(error || response.reason);
       } else {
-        console.log(response.data);
         localStorage.setItem("sn", sn);
         localStorage.setItem("userId", response.data.userId);
         localStorage.setItem("userName", response.data.userName);

@@ -399,10 +399,13 @@ export default function Dashboard() {
     setIsDragging(false);
   }, []);
 
-  const startTouchDrag = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    setIsDragging(true);
-    event.preventDefault();
-  }, []);
+  const startTouchDrag = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      setIsDragging(true);
+      event.preventDefault();
+    },
+    []
+  );
 
   const onTouchDrag = useCallback(
     (event: TouchEvent) => {
@@ -561,22 +564,42 @@ export default function Dashboard() {
           onTouchStart={startTouchDrag}
           color="primary"
           sx={{
-            width: "15px",
+            width: "5px",
+            marginX: "5px",
             cursor: "ew-resize",
-            color: "transparent",
             backgroundColor: "transparent",
             zIndex: 100, // 确保分隔条位于最上层
             ":hover": {
-              color: "neutral.500",
-              // backgroundColor: "primary.outlinedHoverBg",
-              backdropFilter: "blur(10px)",
+              backgroundColor: "primary.plainColor",
+              ">div": {
+                display: "flex",
+              },
+              // backdropFilter: "blur(10px)",
             },
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <DragIndicator fontSize="small" />
+          <Box
+            sx={{
+              width: "15px",
+              marginX: "-5px",
+              paddingY: "5px",
+              display: "none",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "primary.plainColor",
+              borderRadius: "50%",
+            }}
+          >
+            <DragIndicator
+              fontSize="small"
+              sx={{
+                color: "primary.solidColor",
+              }}
+            />
+          </Box>
         </Box>
         <Box sx={{ flex: 1, marginLeft: "-7.5px", width: "100%" }}>
           {data ? (
