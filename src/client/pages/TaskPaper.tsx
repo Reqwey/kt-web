@@ -10,7 +10,12 @@ import LoadingModal from "../components/LoadingModal";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import VideoPlayerModal from "../components/VideoPlayerModal";
-import { LinkRounded, ListAltRounded } from "@mui/icons-material";
+import {
+  LinkRounded,
+  ListAltRounded,
+  VisibilityOffRounded,
+  VisibilityRounded,
+} from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -20,6 +25,7 @@ import {
   Link,
   ListItem,
   ModalClose,
+  Switch,
 } from "@mui/joy";
 import { PaperData, ProblemTree } from "../models/paper";
 import { AttachmentList } from "../components/CourseModulesDrawer";
@@ -35,6 +41,7 @@ export function TaskPaper() {
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
   const { paperId } = useParams();
   const navigate = useNavigate();
   const getData = useGetData();
@@ -102,7 +109,8 @@ export function TaskPaper() {
                     ? question.no
                     : question.children[0].no +
                       "~" +
-                      question.children[question.children.length - 1].no}.
+                      question.children[question.children.length - 1].no}
+                  .
                   <Chip variant="soft" color="primary" size="sm" sx={{ mx: 1 }}>
                     {question.modelName}
                   </Chip>
@@ -123,13 +131,15 @@ export function TaskPaper() {
           height: "100vh",
           width: "100vw",
           overflow: "auto",
+          bgcolor: "neutral.outlinedHoverBg",
         }}
       >
         <Box
           id="app-bar"
           sx={{
-            p: 2,
-            bgcolor: "background.level1",
+            p: 1,
+            position: "sticky",
+            zIndex: "2",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",
@@ -138,6 +148,9 @@ export function TaskPaper() {
             borderColor: "divider",
             top: 0,
             width: "100%",
+            bgcolor: "transparent",
+            backdropFilter: "blur(5px)",
+            boxShadow: "lg",
           }}
         >
           <Button
@@ -151,11 +164,29 @@ export function TaskPaper() {
           <Typography
             id="task-paper-modal-title"
             noWrap={true}
-            level="h3"
+            level="h4"
             endDecorator={
-              <Chip size="md" variant="plain" color="primary">
-                {data.subjectName}
-              </Chip>
+              <>
+                <Chip size="md" variant="plain" color="primary">
+                  {data.subjectName}
+                </Chip>
+                <Switch
+                  size="lg"
+                  color={showAnswer ? "success" : "neutral"}
+                  slotProps={{
+                    input: { "aria-label": "显示答案" },
+                    thumb: {
+                      children: showAnswer ? (
+                        <VisibilityRounded />
+                      ) : (
+                        <VisibilityOffRounded />
+                      ),
+                    },
+                  }}
+                  checked={showAnswer}
+                  onChange={(event) => setShowAnswer(event.target.checked)}
+                />
+              </>
             }
           >
             {data.name}
@@ -171,28 +202,17 @@ export function TaskPaper() {
             大纲
           </Button>
         </Box>
-        <List
-          sx={{
-            overflow: "auto",
-            width: "100%",
-            height: "100%",
-            m: 0,
-          }}
-        >
-          {data.attachments && data.attachments.length > 0 && (
-            <ListItem key="attachments">
-              <AttachmentList attachments={data.attachments} />
-            </ListItem>
-          )}
-          {(data.questions || []).map((item: ProblemTree, index: number) => (
-            <RenderProblem
-              item={item}
-              key={index}
-              setVideoOpen={setVideoOpen}
-              setVideoUrl={setVideoUrl}
-            />
-          ))}
-        </List>
+        {data.attachments && data.attachments.length > 0 && (
+          <AttachmentList attachments={data.attachments} />
+        )}
+        {data.questions && data.questions.length > 0 && (
+          <RenderProblem
+            showAnswer={showAnswer}
+            questions={data.questions}
+            setVideoOpen={setVideoOpen}
+            setVideoUrl={setVideoUrl}
+          />
+        )}
       </Box>
     </>
   );

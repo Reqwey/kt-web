@@ -1,36 +1,35 @@
-import * as React from "react";
-import Box from "@mui/joy/Box";
-import Chip from "@mui/joy/Chip";
-import Button from "@mui/joy/Button";
-import IconButton from "@mui/joy/IconButton";
-import List from "@mui/joy/List";
-import ListItem from "@mui/joy/ListItem";
-import ListItemContent from "@mui/joy/ListItemContent";
-import Link from "@mui/joy/Link";
-import Typography from "@mui/joy/Typography";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import Divider from "@mui/joy/Divider";
-
-// import TaskPaperModal from './TaskPaperModal';
-
-import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
-import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
-import CloseIcon from "@mui/icons-material/Close";
-import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
-import ArticleTwoToneIcon from "@mui/icons-material/ArticleTwoTone";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import {
+  Box,
+  Chip,
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  ListItemContent,
+  Link,
+  Typography,
+  Modal,
+  ModalDialog,
+  Divider,
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Sheet,
   Skeleton,
 } from "@mui/joy";
-import { SchoolTwoTone } from "@mui/icons-material";
+import {
+  InfoRounded,
+  PeopleOutline,
+  Close,
+  Fullscreen,
+  FullscreenExit,
+  ArticleTwoTone,
+  ArrowForward,
+  SchoolTwoTone,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { useGetData } from "../methods/fetch_data";
 
 interface TaskDetailModalOptions {
   open: boolean;
@@ -45,41 +44,41 @@ interface TaskDetailProps {
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
-  const [layout, setLayout] = React.useState(
-    "center" as "center" | "fullscreen"
-  );
-  const [data, setData] = React.useState({
+  const { open, setOpen, taskId } = props;
+  const [layout, setLayout] = useState("center" as "center" | "fullscreen");
+  const [data, setData] = useState({
     title: "",
     detail: [],
     unfinished_students: [],
     first_name: "",
   });
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const getData = useGetData();
 
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
-      setLoading(true);
-      setData(
-        !props.open
-          ? { title: "", detail: [], unfinished_students: [] }
-          : (
-              await axios.get(`/api-task-info/${props.taskId}`, {
-                params: {
-                  username: localStorage.getItem("userName"),
-                  sn: localStorage.getItem("sn"),
-                  token: localStorage.getItem("token"),
-                },
-              })
-            ).data
-      );
-      setLoading(false);
+      if (taskId) {
+        setLoading(true);
+        const { response, error } = await getData(`/api-task-info/${taskId}`, {
+          params: {
+            username: localStorage.getItem("userName"),
+            sn: localStorage.getItem("sn"),
+            token: localStorage.getItem("token"),
+          },
+        });
+        if (!error && response) {
+          setData(response);
+          console.log(response);
+        }
+        setLoading(false);
+      }
     })();
-  }, [props]);
+  }, [taskId]);
 
   return (
     <>
-      <Modal open={!!props.open}>
+      <Modal open={!!open}>
         <ModalDialog aria-labelledby="task-detail-modal-title" layout={layout}>
           <Box
             sx={{
@@ -94,7 +93,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               id="task-detail-modal-title"
               component="h2"
               noWrap={true}
-              startDecorator={!loading && <InfoRoundedIcon />}
+              startDecorator={!loading && <InfoRounded />}
               endDecorator={
                 !loading && (
                   <Chip
@@ -129,20 +128,16 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                   setLayout(layout === "center" ? "fullscreen" : "center");
                 }}
               >
-                {layout === "center" ? (
-                  <FullscreenIcon />
-                ) : (
-                  <FullscreenExitIcon />
-                )}
+                {layout === "center" ? <Fullscreen /> : <FullscreenExit />}
               </IconButton>
               <IconButton
                 variant="plain"
                 color="neutral"
                 onClick={() => {
-                  props.setOpen(false);
+                  setOpen(false);
                 }}
               >
-                <CloseIcon />
+                <Close />
               </IconButton>
             </Box>
           </Box>
@@ -163,7 +158,12 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                       color="neutral"
                       sx={{ width: "100%", p: 1, borderRadius: "md" }}
                     >
-                      <Chip size="sm" key="summary" color="primary" variant="solid">
+                      <Chip
+                        size="sm"
+                        key="summary"
+                        color="primary"
+                        variant="solid"
+                      >
                         {(data.detail[0] as TaskDetailProps).attachments
                           .length + " 个附件"}
                       </Chip>
@@ -177,7 +177,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                               target="_blank"
                               rel="noreferrer"
                               color="primary"
-                              startDecorator={<ArticleTwoToneIcon />}
+                              startDecorator={<ArticleTwoTone />}
                             >
                               {file.name}
                             </Link>
@@ -231,7 +231,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                         </ListItemContent>
                         <Button
                           variant="soft"
-                          endDecorator={<ArrowForwardIcon />}
+                          endDecorator={<ArrowForward />}
                           onClick={() =>
                             navigate(`/paper/${task.paper_id}`, {
                               replace: true,
@@ -285,7 +285,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                         </ListItemContent>
                         <Button
                           variant="soft"
-                          endDecorator={<ArrowForwardIcon />}
+                          endDecorator={<ArrowForward />}
                           onClick={() => {}}
                         >
                           查看内容
@@ -315,7 +315,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                       <Typography
                         component="h3"
                         noWrap={true}
-                        startDecorator={<PeopleOutlineIcon />}
+                        startDecorator={<PeopleOutline />}
                         sx={{
                           "--Typography-gap": "0.5rem",
                           paddingTop: 1,

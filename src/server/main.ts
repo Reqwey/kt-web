@@ -1,10 +1,9 @@
 import express, { Request, RequestHandler, Response } from "express";
 import ViteExpress from "vite-express";
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import { assert } from "console";
 
 dotenv.config();
 
@@ -83,7 +82,7 @@ app.post('/api-login', useHeaders, async (req, res) => {
 });
 
 
-app.get('/api-unfinished-counts', useHeaders, async (req, res: Response) => {
+app.get('/api-unfinished-counts', useHeaders, async (req, res) => {
   try {
     if (!req.fetcher) throw new Error('Fetcher is undefined');
     const response = await req.fetcher.get(`https://api.fuulea.com/v2/tasks/usertasks/statis/`);
@@ -95,7 +94,7 @@ app.get('/api-unfinished-counts', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-task-list/:category', useHeaders, async (req, res: Response) => {
+app.get('/api-task-list/:category', useHeaders, async (req, res) => {
   const { category } = req.params;
   const { page, subjectId, keyword } = req.query as { page: string; subjectId: string; keyword: string };
 
@@ -119,7 +118,7 @@ app.get('/api-task-list/:category', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-task-info/:taskId', useHeaders, async (req, res: Response) => {
+app.get('/api-task-info/:taskId', useHeaders, async (req, res) => {
   const { taskId } = req.params;
 
   try {
@@ -133,7 +132,7 @@ app.get('/api-task-info/:taskId', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-paper/:paperId', useHeaders, async (req, res: Response) => {
+app.get('/api-paper/:paperId', useHeaders, async (req, res) => {
   const { paperId } = req.params;
 
   try {
@@ -147,7 +146,7 @@ app.get('/api-paper/:paperId', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-courses/:mode', useHeaders, async (req, res: Response) => {
+app.get('/api-courses/:mode', useHeaders, async (req, res) => {
   const { mode } = req.params;
 
   try {
@@ -168,7 +167,7 @@ app.get('/api-courses/:mode', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-course-detail/:id', useHeaders, async (req, res: Response) => {
+app.get('/api-course-detail/:id', useHeaders, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -182,7 +181,7 @@ app.get('/api-course-detail/:id', useHeaders, async (req, res: Response) => {
   }
 });
 
-app.get('/api-course-detail-chapters/:id', useHeaders, async (req, res: Response) => {
+app.get('/api-course-detail-chapters/:id', useHeaders, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -196,7 +195,7 @@ app.get('/api-course-detail-chapters/:id', useHeaders, async (req, res: Response
   }
 });
 
-app.get('/api-course-detail-modules/:courseId/:chapterId', useHeaders, async (req, res: Response) => {
+app.get('/api-course-detail-modules/:courseId/:chapterId', useHeaders, async (req, res) => {
   const { courseId, chapterId } = req.params;
 
   try {
