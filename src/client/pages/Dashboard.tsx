@@ -57,41 +57,23 @@ interface SearchModalProps {
 const SearchModal: React.FC<SearchModalProps> = (props) => {
   const { open, setOpen, setTaskId, setTaskDetailModalOpen } = props;
   const [page, setPage] = useState(1);
-  const [data, setData] = useState({
-    results: [],
-    next: "" as any | null,
-  });
   const [pattern, setPattern] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setPage(1);
   }, [props]);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      if (pattern) {
-        const { data } = await axios.get("/api-task-list/search", {
-          params: {
-            username: localStorage.getItem("userName"),
-            sn: localStorage.getItem("sn"),
-            token: localStorage.getItem("token"),
-            page,
-            subjectId: -1,
-            keyword: pattern,
-          },
-        });
-        setData(data);
-      } else {
-        setData({
-          results: [],
-          next: null,
-        });
-      }
-      setLoading(false);
-    })();
-  }, [pattern, page]);
+  const { data, isLoading, error } = useSWR(
+    `/api-task-list/search?page=${page}&subjectId=-1&keyword=${pattern}`,
+    (url) =>
+      getData(url, {
+        params: {
+          username: localStorage.getItem("userName"),
+          sn: localStorage.getItem("sn"),
+          token: localStorage.getItem("token"),
+        },
+      })
+  );
 
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
@@ -100,14 +82,14 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
           placeholder="搜索所有任务…"
           variant="outlined"
           startDecorator={<SearchRounded />}
-          endDecorator={loading ? <CircularProgress size="sm" /> : <></>}
+          endDecorator={isLoading ? <CircularProgress size="sm" /> : <></>}
           sx={{ marginBottom: 2 }}
           onChange={(event: any) => {
             setPattern(event.target.value);
           }}
         />
         <Divider />
-        {data.results.length > 0 ? (
+        {!isLoading && data.results.length > 0 ? (
           <List sx={{ overflow: "auto", marginLeft: -2, marginRight: -2 }}>
             <RenderTasks
               key="searchModalTasksRenderer"
@@ -131,8 +113,8 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
           }}
         >
           <Button
-            disabled={page == 1}
-            color={page == 1 ? "primary" : "primary"}
+            disabled={isLoading || page == 1}
+            color="primary"
             variant="plain"
             size="sm"
             startDecorator={<ArrowBackIosNewRounded fontSize="small" />}
@@ -146,9 +128,9 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
             sx={{ fontWeight: "md", color: "text.secondary" }}
           >{`第 ${page} 页`}</Typography>
           <Button
-            disabled={!data.next}
+            disabled={isLoading || !data.next}
             size="sm"
-            color={!data.next ? "primary" : "primary"}
+            color="primary"
             variant="plain"
             endDecorator={<ArrowForwardIosRounded fontSize="small" />}
             onClick={() => {
@@ -336,16 +318,13 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useSWR(
-    `/api-task-list/${category}`,
+    `/api-task-list/${category}?page=${page}&subjectId=${subjectId}&keyword=`,
     (url) =>
       getData(url, {
         params: {
           username: localStorage.getItem("userName"),
           sn: localStorage.getItem("sn"),
           token: localStorage.getItem("token"),
-          page,
-          subjectId,
-          keyword: "",
         },
       })
   );
@@ -455,11 +434,13 @@ export default function Dashboard() {
         setTaskDetailModalOpen={setTaskDetailModalOpen}
       />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
-      {!!taskId && <TaskDetailModal
-        taskId={taskId}
-        open={taskDetailModalOpen}
-        setOpen={setTaskDetailModalOpen}
-      />}
+      {!!taskId && (
+        <TaskDetailModal
+          taskId={taskId}
+          open={taskDetailModalOpen}
+          setOpen={setTaskDetailModalOpen}
+        />
+      )}
       <Box
         sx={{
           display: "flex",

@@ -47,9 +47,7 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
   React.useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        let response = await mutate(getCountsData, {
-          optimisticData: counts,
-        });
+        let response = await mutate(getCountsData);
         if (response && response.success) {
           setCounts(response);
           localStorage.setItem("subjectCounts", JSON.stringify(response));
