@@ -40,8 +40,8 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
             variant="plain"
             sx={{ width: "100%", boxShadow: "sm", borderRadius: "md", p: 2 }}
           >
-            <Box id={item.id.toString()} sx={{ mt: "-55px", mb: "55px" }} />
             <Typography
+              id={item.id.toString()}
               mb={2}
               component="h4"
               endDecorator={
