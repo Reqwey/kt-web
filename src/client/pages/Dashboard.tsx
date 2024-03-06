@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import {
   Box,
   Avatar,
@@ -43,7 +44,8 @@ import config from "../../../package.json";
 import LoadingModal from "../components/LoadingModal";
 import { TaskListData } from "../models/task_list";
 import axios from "axios";
-import { useGetData } from "../methods/fetch_data";
+import useSWR from "swr";
+import { getData } from "../methods/fetch_data";
 
 interface SearchModalProps {
   open: boolean;
@@ -325,8 +327,6 @@ const InfoModal = React.memo<InfoModalProps>((props) => {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const getData = useGetData();
-  const [loading, setLoading] = useState(false);
   const [subjectId, setSubjectId] = useState(-1);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
@@ -334,16 +334,11 @@ export default function Dashboard() {
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [category, setCategory] = useState<string>("unfinished");
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<TaskListData>();
 
-  useEffect(() => {
-    setPage(1);
-  }, [subjectId, category]);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { response, error } = await getData(`/api-task-list/${category}`, {
+  const { data, isLoading, error } = useSWR(
+    `/api-task-list/${category}`,
+    (url) =>
+      getData(url, {
         params: {
           username: localStorage.getItem("userName"),
           sn: localStorage.getItem("sn"),
@@ -352,23 +347,17 @@ export default function Dashboard() {
           subjectId,
           keyword: "",
         },
-      });
-      if (!error) {
-        setData(response);
-      } else {
-        setSnackContent(error as string);
-        setSnackOpen(true);
-      }
-      setLoading(false);
-    })();
-  }, [category, page, subjectId]);
+      })
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [subjectId, category]);
 
   const leftMinWidth = 200,
     rightMinWidth = 200;
   const [leftWidth, setLeftWidth] = useState(300); // 初始左侧栏宽度
   const [isDragging, setIsDragging] = useState(false);
-  const [snackOpen, setSnackOpen] = useState(false);
-  const [snackContent, setSnackContent] = useState("");
 
   const startDragging = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -443,20 +432,22 @@ export default function Dashboard() {
 
   return (
     <>
+      <Helmet>
+        <title>任务中心 | Kunter Online</title>
+      </Helmet>
       <Snackbar
         variant="soft"
         color="danger"
         autoHideDuration={5000}
-        open={snackOpen}
-        onClose={() => setSnackOpen(false)}
+        open={!!error}
         startDecorator={<Report fontSize="large" />}
       >
         <div>
           <Typography level="title-lg">获取数据失败</Typography>
-          <Typography sx={{ mt: 1, mb: 2 }}>{snackContent}</Typography>
+          <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
         </div>
       </Snackbar>
-      <LoadingModal loading={loading} />
+      <LoadingModal loading={isLoading} />
       <SearchModal
         open={searchModalOpen}
         setOpen={setSearchModalOpen}
@@ -464,11 +455,11 @@ export default function Dashboard() {
         setTaskDetailModalOpen={setTaskDetailModalOpen}
       />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
-      <TaskDetailModal
+      {!!taskId && <TaskDetailModal
         taskId={taskId}
         open={taskDetailModalOpen}
         setOpen={setTaskDetailModalOpen}
-      />
+      />}
       <Box
         sx={{
           display: "flex",

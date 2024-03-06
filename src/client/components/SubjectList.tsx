@@ -5,7 +5,8 @@ import ListSubheader from "@mui/joy/ListSubheader";
 import ListItemButton from "@mui/joy/ListItemButton";
 import Chip from "@mui/joy/Chip";
 import { SubjectListData } from "../models/subject_list";
-import { useGetData } from "../methods/fetch_data";
+import { getData } from "../methods/fetch_data";
+import useSWR from "swr";
 
 interface SubjectListProps {
   subjectId: number;
@@ -20,28 +21,41 @@ const calcCount = (data: SubjectListData) =>
 const SubjectList: React.FC<SubjectListProps> = (props) => {
   const { subjectId, setSubjectId } = props;
   const fromStorage = localStorage.getItem("subjectCounts");
-  const [counts, setCounts] = React.useState<SubjectListData>(
-    fromStorage ? JSON.parse(fromStorage) : { subjects: [] }
-  );
-  const [totalCount, setTotalCount] = React.useState<number>(
-    fromStorage ? calcCount(JSON.parse(fromStorage)) : 0
-  );
-  const getData = useGetData();
-
-  React.useEffect(() => {
-    const interval = setInterval(async () => {
-      let { response } = await getData("/api-unfinished-counts", {
+  const getCountsData = React.useCallback(
+    (url: string) =>
+      getData(url, {
         params: {
           username: localStorage.getItem("userName"),
           sn: localStorage.getItem("sn"),
           token: localStorage.getItem("token"),
         },
-      });
-      if (response && response.success) {
-        setCounts(response);
-        localStorage.setItem("subjectCounts", JSON.stringify(response));
-        setTotalCount(calcCount(response as SubjectListData));
-      }
+      }),
+    []
+  );
+  const { data, mutate } = useSWR("/api-unfinished-counts", getCountsData);
+  const [counts, setCounts] = React.useState<SubjectListData>(
+    data || (fromStorage ? JSON.parse(fromStorage) : { subjects: [] })
+  );
+  const [totalCount, setTotalCount] = React.useState<number>(
+    data
+      ? calcCount(data)
+      : fromStorage
+      ? calcCount(JSON.parse(fromStorage))
+      : 0
+  );
+
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        let response = await mutate(getCountsData, {
+          optimisticData: counts,
+        });
+        if (response && response.success) {
+          setCounts(response);
+          localStorage.setItem("subjectCounts", JSON.stringify(response));
+          setTotalCount(calcCount(response as SubjectListData));
+        }
+      } catch (e) {}
     }, 5000);
     return () => clearInterval(interval);
   }, []);

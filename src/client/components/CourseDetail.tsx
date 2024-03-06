@@ -22,14 +22,14 @@ import {
   ListAltRounded,
 } from "@mui/icons-material";
 import logoSrc from "../assets/logo.png";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import LoadingModal from "../components/LoadingModal";
 import CourseChapter from "./CourseChapter";
 import CourseModulesDrawer from "./CourseModulesDrawer";
 import { CourseDetailData, Course } from "../models/course";
-import axios from "axios";
-import { useGetData } from "../methods/fetch_data";
 import MySuspense from "./MySuspense";
+import useSWR from "swr";
+import { getData } from "../methods/fetch_data";
 
 interface CourseDetailProps {
   id: string;
@@ -43,98 +43,49 @@ interface CourseDetailProps {
 export default function CourseDetail(props: CourseDetailProps) {
   const { id, title, cover, setCourseId, setCourseTitle, setCourseCover } =
     props;
-  const [data, setData] = useState<CourseDetailData>();
-  const [pageLoading, setPageLoading] = useState(false);
-  const [treeLoading, setTreeLoading] = useState(false);
-  const [drawerLoading, setDrawerLoading] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedResultId, setSelectedResultId] = useState(-1);
-  const [selectedCourseRanges, setSelectedCourseRanges] = useState<Course[]>(
-    []
+  
+  const _getData = useCallback((url: string) =>
+  getData(url, {
+    params: {
+      username: localStorage.getItem("userName"),
+      sn: localStorage.getItem("sn"),
+      token: localStorage.getItem("token"),
+    },
+  }), []);
+
+  const {
+    data,
+    isLoading: pageLoading,
+  } = useSWR(`/api-course-detail/${id}`, _getData);
+
+  const [selectedResultId, setSelectedResultId] = useState(
+    data.results[0].id || -1
   );
-  const [selectedCourseId, setSelectedCourseId] = useState(-1);
-  const [courseData, setCourseData] = useState<any[]>([]);
+  const [selectedCourseRanges, setSelectedCourseRanges] = useState<Course[]>(
+    data.results[0].courses || []
+  );
+  const [selectedCourseId, setSelectedCourseId] = useState(
+    data.results[0].courses[0].id || -1
+  );
+
+  const {
+    data: courseData,
+    isLoading: treeLoading,
+  } = useSWR(`/api-course-detail-chapters/${selectedCourseId}`, _getData);
+
   const [selectedChapter, setSelectedChapter] = useState<any>({});
-  const [modulesData, setModulesData] = useState<any[]>([]);
+  const {
+    data: modulesData,
+    isLoading: drawerLoading,
+  } = useSWR(selectedCourseId !== -1 && selectedChapter && selectedChapter.id ? `/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}` : null, _getData);
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [modulesDrawerOpen, setModulesDrawerOpen] = useState(false);
-  const getData = useGetData();
 
-  useEffect(() => {
-    (async () => {
-      setPageLoading(true);
-      const { response, error } = await getData(`/api-course-detail/${id}`, {
-        params: {
-          username: localStorage.getItem("userName"),
-          sn: localStorage.getItem("sn"),
-          token: localStorage.getItem("token"),
-        },
-      });
-      if (!error) {
-        setData(response);
-        setSelectedResultId(response.results[0].id);
-        setSelectedCourseRanges(response.results[0].courses);
-        setSelectedCourseId(response.results[0].courses[0].id);
-      }
-      setPageLoading(false);
-    })();
-  }, [
-    setPageLoading,
-    setData,
-    setSelectedResultId,
-    setSelectedCourseRanges,
-    setSelectedCourseId,
-  ]);
-
-  useEffect(() => {
-    (async () => {
-      if (selectedCourseId !== -1) {
-        setTreeLoading(true);
-        const { response, error } = await getData(
-          `/api-course-detail-chapters/${selectedCourseId}`,
-          {
-            params: {
-              username: localStorage.getItem("userName"),
-              sn: localStorage.getItem("sn"),
-              token: localStorage.getItem("token"),
-            },
-          }
-        );
-        if (!error) {
-          setCourseData(response);
-        }
-        setTreeLoading(false);
-      }
-    })();
-  }, [selectedCourseId, setTreeLoading, setCourseData]);
-
-  useEffect(() => {
-    (async () => {
-      if (selectedCourseId !== -1 && selectedChapter && selectedChapter.id) {
-        setModulesDrawerOpen(true);
-        setDrawerLoading(true);
-        const { response, error } = await getData(
-          `/api-course-detail-modules/${selectedCourseId}/${selectedChapter.id}`,
-          {
-            params: {
-              username: localStorage.getItem("userName"),
-              sn: localStorage.getItem("sn"),
-              token: localStorage.getItem("token"),
-            },
-          }
-        );
-        if (!error) {
-          setModulesData(response);
-        }
-        setDrawerLoading(false);
-      }
-    })();
-  }, [
-    selectedCourseId,
-    selectedChapter,
-    setDrawerLoading,
-    setModulesData,
-    setModulesDrawerOpen,
-  ]);
+  const handleChapterClick = useCallback((chapter: any) => {
+    setSelectedChapter(chapter);
+    setModulesDrawerOpen(true);
+  }, []);
 
   return (
     <Box
@@ -311,7 +262,7 @@ export default function CourseDetail(props: CourseDetailProps) {
                 },
               }}
             >
-              {data?.results.map((item, index) => (
+              {data && (data as CourseDetailData).results.map((item, index) => (
                 <ListItem key={index}>
                   <ListItemButton
                     variant={selectedResultId === item.id ? "solid" : "plain"}
@@ -357,7 +308,7 @@ export default function CourseDetail(props: CourseDetailProps) {
             <MySuspense loading={treeLoading}>
               <CourseChapter
                 data={courseData}
-                handleClick={setSelectedChapter}
+                handleClick={handleChapterClick}
               />
             </MySuspense>
           </Sheet>

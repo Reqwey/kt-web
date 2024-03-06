@@ -1,25 +1,16 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig } from "axios";
 
-const useGetData = () => {
-	return async (url: string, config: AxiosRequestConfig<any> | undefined) => {
-		try {
-			const { data } = await axios.get(url, config);
-			return { response: data };
-		} catch (e) {
-			return { error: e };
-		}
-	}
-};
+async function getData(
+  url: string,
+  config: AxiosRequestConfig<any> | undefined
+) {
+  const { data } = await axios.get(url, config);
+  return data;
+}
 
-const usePostData = () => {
-	return async (url: string, body: any) => {
-		try {
-			const { data } = await axios.post(url, body);
-			return { response: data };
-		} catch (e) {
-			return { error: e };
-		}
-	}
-};
+async function postData(url: string, { arg }: { arg: any }) {
+  const { data } = await axios.post(url, { ...arg });
+  return data;
+}
 
-export { useGetData, usePostData };
+export { getData, postData };

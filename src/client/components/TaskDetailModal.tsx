@@ -28,8 +28,8 @@ import {
   ArrowForward,
   SchoolTwoTone,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-import { useGetData } from "../methods/fetch_data";
+import useSWR from "swr";
+import { getData } from "../methods/fetch_data";
 
 interface TaskDetailModalOptions {
   open: boolean;
@@ -46,35 +46,15 @@ interface TaskDetailProps {
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const { open, setOpen, taskId } = props;
   const [layout, setLayout] = useState("center" as "center" | "fullscreen");
-  const [data, setData] = useState({
-    title: "",
-    detail: [],
-    unfinished_students: [],
-    first_name: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const getData = useGetData();
-
-  useEffect(() => {
-    (async () => {
-      if (taskId) {
-        setLoading(true);
-        const { response, error } = await getData(`/api-task-info/${taskId}`, {
-          params: {
-            username: localStorage.getItem("userName"),
-            sn: localStorage.getItem("sn"),
-            token: localStorage.getItem("token"),
-          },
-        });
-        if (!error && response) {
-          setData(response);
-          console.log(response);
-        }
-        setLoading(false);
-      }
-    })();
-  }, [taskId]);
+  const { data, isLoading, error } = useSWR(`/api-task-info/${taskId}`, (url) =>
+    getData(url, {
+      params: {
+        username: localStorage.getItem("userName"),
+        sn: localStorage.getItem("sn"),
+        token: localStorage.getItem("token"),
+      },
+    })
+  );
 
   return (
     <>
@@ -93,9 +73,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               id="task-detail-modal-title"
               component="h2"
               noWrap={true}
-              startDecorator={!loading && <InfoRounded />}
+              startDecorator={!isLoading && <InfoRounded />}
               endDecorator={
-                !loading && (
+                !isLoading && (
                   <Chip
                     variant="soft"
                     color="primary"
@@ -107,8 +87,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                 )
               }
             >
-              <Skeleton animation="wave" loading={loading}>
-                {loading ? "Lorem ipsum is placeholder text" : data.title}
+              <Skeleton animation="wave" loading={isLoading}>
+                {isLoading ? "Lorem ipsum is placeholder text" : data.title}
               </Skeleton>
             </Typography>
             <Box
@@ -145,158 +125,163 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
           <Box width="100%" height="100%" overflow="auto">
             <Skeleton
               animation="wave"
-              loading={loading}
+              loading={isLoading}
               sx={{ position: "relative", width: "100%", height: "20vh" }}
             >
-              {!loading &&
-              data.detail.length === 1 &&
-              !(data.detail[0] as TaskDetailProps).title ? (
-                <>
-                  {(data.detail[0] as TaskDetailProps).attachments.length ? (
-                    <Sheet
-                      variant="soft"
-                      color="neutral"
-                      sx={{ width: "100%", p: 1, borderRadius: "md" }}
-                    >
-                      <Chip
-                        size="sm"
-                        key="summary"
-                        color="primary"
-                        variant="solid"
+              {!isLoading &&
+                (data.detail.length === 1 &&
+                !(data.detail[0] as TaskDetailProps).title ? (
+                  <>
+                    {(data.detail[0] as TaskDetailProps).attachments.length ? (
+                      <Sheet
+                        variant="soft"
+                        color="neutral"
+                        sx={{ width: "100%", p: 1, borderRadius: "md" }}
                       >
-                        {(data.detail[0] as TaskDetailProps).attachments
-                          .length + " 个附件"}
-                      </Chip>
-                      <br />
-                      {(data.detail[0] as TaskDetailProps).attachments.map(
-                        (file: any, index) => (
-                          <>
-                            <Link
-                              key={index}
-                              href={file.source_file}
-                              target="_blank"
-                              rel="noreferrer"
-                              color="primary"
-                              startDecorator={<ArticleTwoTone />}
-                            >
-                              {file.name}
-                            </Link>
-                            <br />
-                          </>
-                        )
-                      )}
-                    </Sheet>
-                  ) : (
-                    <></>
-                  )}
-                  <Box width="100%" position="relative">
-                    <div
-                      className="KtContent"
-                      style={{ width: "100%" }}
-                      dangerouslySetInnerHTML={{
-                        __html: (data.detail[0] as TaskDetailProps).content,
-                      }}
-                    ></div>
-                  </Box>
-                </>
-              ) : (
-                <List
-                  variant="outlined"
-                  color="neutral"
-                  sx={{
-                    width: "100%",
-                    overflowY: "auto",
-                    borderRadius: "sm",
-                  }}
-                >
-                  {data.detail.map((task: any) =>
-                    task.paper_id ? (
-                      <ListItem key={"paper" + task.paper_id}>
-                        <ListItemContent>
-                          <Typography
-                            component="h4"
-                            fontWeight="bd"
-                            endDecorator={
-                              <Chip
-                                size="sm"
-                                variant="soft"
-                                color={task.is_finished ? "success" : "danger"}
-                              >
-                                {task.is_finished ? "已完成" : "未完成"}
-                              </Chip>
-                            }
-                          >
-                            {task.title}
-                          </Typography>
-                        </ListItemContent>
-                        <Button
-                          variant="soft"
-                          endDecorator={<ArrowForward />}
-                          onClick={() =>
-                            navigate(`/paper/${task.paper_id}`, {
-                              replace: true,
-                            })
-                          }
+                        <Chip
+                          size="sm"
+                          key="summary"
+                          color="primary"
+                          variant="solid"
                         >
-                          进入任务
-                        </Button>
-                      </ListItem>
-                    ) : task.exercise_id ? (
-                      <ListItem key={"exercise" + task.exercise_id}>
-                        <ListItemContent>
-                          <Typography
-                            component="h4"
-                            fontWeight="bd"
-                            endDecorator={
-                              <Chip
-                                size="sm"
-                                variant="soft"
-                                color={task.is_finished ? "success" : "danger"}
+                          {(data.detail[0] as TaskDetailProps).attachments
+                            .length + " 个附件"}
+                        </Chip>
+                        <br />
+                        {(data.detail[0] as TaskDetailProps).attachments.map(
+                          (file: any, index) => (
+                            <>
+                              <Link
+                                key={index}
+                                href={file.source_file}
+                                target="_blank"
+                                rel="noreferrer"
+                                color="primary"
+                                startDecorator={<ArticleTwoTone />}
                               >
-                                {task.is_finished ? "已完成" : "未完成"}
-                              </Chip>
-                            }
-                          >
-                            {task.title}
-                          </Typography>
-                        </ListItemContent>
-                        <Button variant="soft" disabled onClick={() => {}}>
-                          暂不支持查看
-                        </Button>
-                      </ListItem>
-                    ) : task.chapter_id ? (
-                      <ListItem key={"chapter" + task.chapter_id}>
-                        <ListItemContent>
-                          <Typography
-                            component="h4"
-                            fontWeight="bd"
-                            endDecorator={
-                              <Chip
-                                size="sm"
-                                variant="soft"
-                                color={task.is_finished ? "success" : "danger"}
-                              >
-                                {task.is_finished ? "已完成" : "未完成"}
-                              </Chip>
-                            }
-                          >
-                            {task.title}
-                          </Typography>
-                        </ListItemContent>
-                        <Button
-                          variant="soft"
-                          endDecorator={<ArrowForward />}
-                          onClick={() => {}}
-                        >
-                          查看内容
-                        </Button>
-                      </ListItem>
+                                {file.name}
+                              </Link>
+                              <br />
+                            </>
+                          )
+                        )}
+                      </Sheet>
                     ) : (
                       <></>
-                    )
-                  )}
-                </List>
-              )}
+                    )}
+                    <Box width="100%" position="relative">
+                      <div
+                        className="KtContent"
+                        style={{ width: "100%" }}
+                        dangerouslySetInnerHTML={{
+                          __html: (data.detail[0] as TaskDetailProps).content,
+                        }}
+                      ></div>
+                    </Box>
+                  </>
+                ) : (
+                  <List
+                    variant="outlined"
+                    color="neutral"
+                    sx={{
+                      width: "100%",
+                      overflowY: "auto",
+                      borderRadius: "sm",
+                    }}
+                  >
+                    {data.detail.map((task: any) =>
+                      task.paper_id ? (
+                        <ListItem key={"paper" + task.paper_id}>
+                          <ListItemContent>
+                            <Typography
+                              component="h4"
+                              fontWeight="bd"
+                              endDecorator={
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  color={
+                                    task.is_finished ? "success" : "danger"
+                                  }
+                                >
+                                  {task.is_finished ? "已完成" : "未完成"}
+                                </Chip>
+                              }
+                            >
+                              {task.title}
+                            </Typography>
+                          </ListItemContent>
+                          <Button
+                            component="a"
+                            variant="soft"
+                            endDecorator={<ArrowForward />}
+                            href={`/paper/${task.paper_id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            进入任务
+                          </Button>
+                        </ListItem>
+                      ) : task.exercise_id ? (
+                        <ListItem key={"exercise" + task.exercise_id}>
+                          <ListItemContent>
+                            <Typography
+                              component="h4"
+                              fontWeight="bd"
+                              endDecorator={
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  color={
+                                    task.is_finished ? "success" : "danger"
+                                  }
+                                >
+                                  {task.is_finished ? "已完成" : "未完成"}
+                                </Chip>
+                              }
+                            >
+                              {task.title}
+                            </Typography>
+                          </ListItemContent>
+                          <Button variant="soft" disabled onClick={() => {}}>
+                            暂不支持查看
+                          </Button>
+                        </ListItem>
+                      ) : task.chapter_id ? (
+                        <ListItem key={"chapter" + task.chapter_id}>
+                          <ListItemContent>
+                            <Typography
+                              component="h4"
+                              fontWeight="bd"
+                              endDecorator={
+                                <Chip
+                                  size="sm"
+                                  variant="soft"
+                                  color={
+                                    task.is_finished ? "success" : "danger"
+                                  }
+                                >
+                                  {task.is_finished ? "已完成" : "未完成"}
+                                </Chip>
+                              }
+                            >
+                              {task.title}
+                            </Typography>
+                          </ListItemContent>
+                          <Button
+                            variant="soft"
+                            endDecorator={<ArrowForward />}
+                            onClick={() => {}}
+                          >
+                            查看内容
+                          </Button>
+                        </ListItem>
+                      ) : (
+                        <></>
+                      )
+                    )}
+                  </List>
+                ))}
             </Skeleton>
           </Box>
           <Divider />
@@ -305,9 +290,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               animation="wave"
               variant="overlay"
               sx={{ width: "100%", height: "5vh", position: "relative" }}
-              loading={loading}
+              loading={isLoading}
             >
-              {!loading &&
+              {!isLoading &&
                 data.unfinished_students &&
                 data.unfinished_students.length > 0 && (
                   <Accordion>

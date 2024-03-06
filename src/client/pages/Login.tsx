@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import {
   GlobalStyles,
   Alert,
@@ -18,7 +19,8 @@ import ColorSchemeToggle from "../components/ColorSchemeToggle";
 import logoSrc from "../assets/logo.png";
 import whiteBackgroundSrc from "../assets/whitebg.jpg";
 import darkBackgroundSrc from "../assets/darkbg.jpg";
-import { usePostData } from "../methods/fetch_data";
+import { postData } from "../methods/fetch_data";
+import useSWRMutation from "swr/mutation";
 
 interface props {
   message: string;
@@ -47,9 +49,8 @@ const AlertMessage: React.FC<props> = (props) => {
 
 export default function Login() {
   const navigate = useNavigate();
-  const postData = usePostData();
+  const { trigger, isMutating } = useSWRMutation("/api-login", postData, );
 
-  const [isLoading, setLoading] = useState(false);
   const [username, setUsername] = useState(
     ("" || localStorage.getItem("userName")) as string
   );
@@ -59,21 +60,16 @@ export default function Login() {
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      setLoading(true);
-      const { response, error } = await postData("/api-login", {
-        username,
-        password,
-        sn,
-      });
-      localStorage.setItem("sn", sn);
-      if (error || !response.posted) {
-        setLoading(false);
-        setErrorMessage(error || response.reason);
-      } else {
+      try {
+        event.preventDefault();
+        localStorage.setItem("userName", username);
         localStorage.setItem("sn", sn);
+        const response = await trigger({
+          username,
+          password,
+          sn,
+        });
         localStorage.setItem("userId", response.data.userId);
-        localStorage.setItem("userName", response.data.userName);
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("displayName", response.data.firstName);
         localStorage.setItem(
@@ -81,6 +77,8 @@ export default function Login() {
           JSON.stringify(response.data.subjectList)
         );
         navigate("/dashboard", { replace: true });
+      } catch (error: any) {
+        setErrorMessage(error);
       }
     },
     [username, password, sn]
@@ -88,6 +86,9 @@ export default function Login() {
 
   return (
     <>
+      <Helmet>
+        <title>登录 | Kunter Online</title>
+      </Helmet>
       <GlobalStyles
         styles={{
           ":root": {
@@ -224,7 +225,7 @@ export default function Login() {
                   defaultValue={"" || (localStorage.getItem("sn") as string)}
                 />
               </FormControl>
-              <Button type="submit" fullWidth loading={isLoading}>
+              <Button type="submit" fullWidth loading={isMutating}>
                 登录
               </Button>
               <AlertMessage message={errorMessage} />

@@ -134,7 +134,7 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
                 setVideoUrl={setVideoUrl}
               />
             )}
-            {showAnswer && item.noChoiceAnswer && (
+            {showAnswer && (
               <Typography
                 variant="soft"
                 color="success"
@@ -148,17 +148,21 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
                 <Chip variant="solid" size="sm" color="success">
                   答案
                 </Chip>
-                <div
-                  className="KtContent"
-                  style={{
-                    width: "100%",
-                    wordBreak: "break-all",
-                    overflowWrap: "break-word",
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: item.noChoiceAnswer || "",
-                  }}
-                ></div>
+                <br />
+                {item.model <= 1 && item.proper}
+                {item.noChoiceAnswer && (
+                  <div
+                    className="KtContent"
+                    style={{
+                      width: "100%",
+                      wordBreak: "break-all",
+                      overflowWrap: "break-word",
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: item.noChoiceAnswer || "",
+                    }}
+                  ></div>
+                )}
               </Typography>
             )}
             {showAnswer && item.analysis && (
