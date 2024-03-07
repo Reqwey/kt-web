@@ -62,18 +62,15 @@ export default function CourseDetail(props: CourseDetailProps) {
     _getData
   );
 
-  const [selectedResultId, setSelectedResultId] = useState(
-    pageLoading ? -1 : data.results[0].id
-  );
+  const [selectedResultId, setSelectedResultId] = useState(-1);
   const [selectedCourseRanges, setSelectedCourseRanges] = useState<Course[]>(
-    pageLoading ? [] : data.results[0].courses
+    []
   );
-  const [selectedCourseId, setSelectedCourseId] = useState(
-    pageLoading ? -1 : data.results[0].courses[0].id
-  );
+  const [selectedCourseId, setSelectedCourseId] = useState(-1);
 
   const { data: courseData, isLoading: treeLoading } = useSWR(
-    `/api-course-detail-chapters/${selectedCourseId}`,
+    selectedCourseId !== -1 &&
+      `/api-course-detail-chapters/${selectedCourseId}`,
     _getData
   );
 
@@ -88,6 +85,19 @@ export default function CourseDetail(props: CourseDetailProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modulesDrawerOpen, setModulesDrawerOpen] = useState(false);
 
+  useEffect(() => {
+    if (!pageLoading) {
+      setSelectedResultId(data.results[0].id);
+      setSelectedCourseRanges(data.results[0].courses);
+      setSelectedCourseId(data.results[0].courses[0].id);
+    }
+  }, [
+    pageLoading,
+    setSelectedResultId,
+    setSelectedCourseRanges,
+    setSelectedCourseId,
+  ]);
+
   const handleChapterClick = useCallback((chapter: any) => {
     setSelectedChapter(chapter);
     setModulesDrawerOpen(true);
@@ -100,18 +110,9 @@ export default function CourseDetail(props: CourseDetailProps) {
       </Helmet>
       <Box
         sx={{
-          "--Grid-borderWidth": "1px",
           overflow: "hidden",
           width: "100vw",
           height: "100vh",
-          borderTop: "var(--Grid-borderWidth) solid",
-          borderLeft: "var(--Grid-borderWidth) solid",
-          borderColor: "divider",
-          "& > div": {
-            borderRight: "var(--Grid-borderWidth) solid",
-            borderBottom: "var(--Grid-borderWidth) solid",
-            borderColor: "divider",
-          },
           display: "flex",
           flexDirection: "column",
         }}
@@ -130,6 +131,7 @@ export default function CourseDetail(props: CourseDetailProps) {
             top: 0,
             zIndex: 1100,
             width: "100%",
+            boxShadow: "md",
           }}
         >
           <Button
@@ -216,20 +218,11 @@ export default function CourseDetail(props: CourseDetailProps) {
           container
           spacing={0}
           sx={{
-            "--Grid-borderWidth": "1px",
             overflow: "hidden",
             height: "100%",
             width: "100%",
             flexGrow: 1,
             backgroundColor: "background.level2",
-            borderTop: "var(--Grid-borderWidth) solid",
-            borderLeft: "var(--Grid-borderWidth) solid",
-            borderColor: "divider",
-            "& > div": {
-              borderRight: "var(--Grid-borderWidth) solid",
-              borderBottom: "var(--Grid-borderWidth) solid",
-              borderColor: "divider",
-            },
           }}
         >
           <Grid xs={3} height="100%">
@@ -250,6 +243,7 @@ export default function CourseDetail(props: CourseDetailProps) {
                   flexShrink: 0,
                   m: 2,
                   borderRadius: "md",
+                  boxShadow: "sm",
                 }}
               >
                 {cover ? (
@@ -265,33 +259,29 @@ export default function CourseDetail(props: CourseDetailProps) {
                   <BookTwoTone sx={{ fontSize: "30px" }} />
                 )}
               </AspectRatio>
-              <List
-                sx={{
-                  '& [role="button"]': {
-                    margin: ".1px",
-                    borderRadius: "md",
-                  },
-                }}
-              >
+              <List sx={{ m: 0 }}>
                 {data &&
                   (data as CourseDetailData).results.map((item, index) => (
-                    <ListItem key={index}>
+                    <ListItem key={index} sx={{ ml: 2, mt: 1 }}>
                       <ListItemButton
-                        variant={
-                          selectedResultId === item.id ? "solid" : "plain"
-                        }
-                        color={
-                          selectedResultId === item.id ? "primary" : "neutral"
-                        }
+                        variant="plain"
                         sx={{
+                          bgcolor:
+                            selectedResultId === item.id
+                              ? "var(--joy-palette-background-surface)"
+                              : "transparent",
+                          borderTopLeftRadius: "var(--joy-radius-md)",
+                          borderBottomLeftRadius: "var(--joy-radius-md)",
                           fontSize: "sm",
                           fontWeight: "lg",
                           boxShadow:
-                            selectedResultId === item.id
-                              ? "var(--joy-palette-primary-outlinedBorder) 0px 3px 10px"
-                              : "unset",
+                            selectedResultId === item.id ? "sm" : "unset",
                           display: "flex",
                           justifyContent: "space-between",
+                          ":hover": {
+                            bgcolor:
+                              "var(--joy-palette-background-surface) !important",
+                          },
                         }}
                         onClick={() => {
                           setSelectedResultId(item.id);
@@ -313,15 +303,16 @@ export default function CourseDetail(props: CourseDetailProps) {
           <Grid xs height="100%">
             <Sheet
               sx={{
+                width: "100%",
                 height: "100%",
                 overflow: "auto",
                 display: "flex",
                 flexDirection: "column",
                 p: 2,
               }}
-              variant="soft"
+              variant="plain"
             >
-              <MySuspense loading={treeLoading}>
+              <MySuspense loading={treeLoading || !courseData}>
                 <CourseChapter
                   data={courseData}
                   handleClick={handleChapterClick}

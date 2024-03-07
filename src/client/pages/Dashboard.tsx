@@ -20,6 +20,8 @@ import {
   Typography,
   Divider,
   Snackbar,
+  Radio,
+  RadioGroup,
 } from "@mui/joy";
 
 import {
@@ -31,21 +33,17 @@ import {
   SearchRounded,
   DragIndicator,
   LightbulbOutlined,
-  NotificationsOffTwoTone,
 } from "@mui/icons-material";
 
 import ColorSchemeToggle from "../components/ColorSchemeToggle";
 import TaskList from "../components/TaskList";
 import TaskDetailModal from "../components/TaskDetailModal";
 import SubjectList from "../components/SubjectList";
-import { RenderTasks } from "../components/TaskList";
 
 import config from "../../../package.json";
-import LoadingModal from "../components/LoadingModal";
-import { TaskListData } from "../models/task_list";
-import axios from "axios";
 import useSWR from "swr";
 import { getData } from "../methods/fetch_data";
+import MySuspense from "../components/MySuspense";
 
 interface SearchModalProps {
   open: boolean;
@@ -89,18 +87,17 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
           }}
         />
         <Divider />
-        {!isLoading && data.results.length > 0 ? (
-          <List sx={{ overflow: "auto", marginLeft: -2, marginRight: -2 }}>
-            <RenderTasks
-              key="searchModalTasksRenderer"
-              data={data.results}
-              setTaskId={setTaskId}
-              setTaskDetailModalOpen={setTaskDetailModalOpen}
-            />
-          </List>
-        ) : (
-          <EmptyContent />
-        )}
+        <Box sx={{ overflow: "auto", ml: -2, mr: -2, mt: -1, mb: -1 }}>
+          <MySuspense loading={isLoading || !data}>
+            {data && data.results && (
+              <TaskList
+                data={data.results}
+                setTaskId={setTaskId}
+                setTaskDetailModalOpen={setTaskDetailModalOpen}
+              />
+            )}
+          </MySuspense>
+        </Box>
         <Divider />
         <Box
           sx={{
@@ -333,6 +330,13 @@ export default function Dashboard() {
     setPage(1);
   }, [subjectId, category]);
 
+  const handleCategoryChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setCategory(event.target.value);
+    },
+    [setCategory]
+  );
+
   const leftMinWidth = 200,
     rightMinWidth = 200;
   const [leftWidth, setLeftWidth] = useState(300); // 初始左侧栏宽度
@@ -426,7 +430,6 @@ export default function Dashboard() {
           <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
         </div>
       </Snackbar>
-      <LoadingModal loading={isLoading} />
       <SearchModal
         open={searchModalOpen}
         setOpen={setSearchModalOpen}
@@ -573,43 +576,130 @@ export default function Dashboard() {
             />
           </Box>
         </Box>
-        <Box sx={{ flex: 1, marginLeft: "-7.5px", width: "100%" }}>
-          {data ? (
-            <TaskList
-              setTaskId={setTaskId}
-              setTaskDetailModalOpen={setTaskDetailModalOpen}
-              category={category}
-              setCategory={setCategory}
-              page={page}
-              setPage={setPage}
-              data={data}
-            />
-          ) : (
-            <EmptyContent />
-          )}
-        </Box>
+        <Sheet
+          variant="soft"
+          sx={{
+            flex: 1,
+            marginLeft: "-7.5px",
+            width: "100%",
+            height: "100vh",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              width: "100%",
+              height: "100%",
+              overflow: "auto",
+              position: "relative",
+            }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 2,
+                p: 1,
+                backgroundColor: "transparent",
+                backdropFilter: "blur(5px)",
+                position: "sticky",
+                top: 0,
+                boxShadow: "md",
+                zIndex: 99,
+              }}
+            >
+              <Button
+                disabled={page == 1}
+                color={page == 1 ? "neutral" : "primary"}
+                variant="plain"
+                size="sm"
+                startDecorator={<ArrowBackIosNewRounded />}
+                onClick={() => {
+                  setPage(page - 1);
+                }}
+              >
+                上一页
+              </Button>
+              <RadioGroup
+                orientation="horizontal"
+                aria-labelledby="segmented-controls-example"
+                name="query"
+                value={category}
+                size="sm"
+                onChange={handleCategoryChange}
+                sx={{
+                  minHeight: 37,
+                  padding: "4px",
+                  fontSize: "sm",
+                  borderRadius: "md",
+                  bgcolor: "neutral.softBg",
+                  "--RadioGroup-gap": "4px",
+                  "--Radio-actionRadius": "8px",
+                }}
+              >
+                {[
+                  ["unfinished", "未完成"],
+                  ["finished", "已完成"],
+                  ["ended", "已截止"],
+                  ["favorited", "收藏"],
+                  ["material", "资料"],
+                ].map((item, index) => (
+                  <Radio
+                    key={index}
+                    color="neutral"
+                    value={item[0]}
+                    disableIcon
+                    label={item[1]}
+                    variant="plain"
+                    sx={{
+                      px: 2,
+                      alignItems: "center",
+                    }}
+                    slotProps={{
+                      action: ({ checked }) => ({
+                        sx: {
+                          ...(checked && {
+                            bgcolor: "background.surface",
+                            boxShadow: "md",
+                            "&:hover": {
+                              bgcolor: "background.surface",
+                            },
+                          }),
+                        },
+                      }),
+                    }}
+                  />
+                ))}
+              </RadioGroup>
+              <Button
+                disabled={isLoading || !data.next}
+                size="sm"
+                color={isLoading || !data.next ? "neutral" : "primary"}
+                variant="plain"
+                endDecorator={<ArrowForwardIosRounded />}
+                onClick={() => {
+                  setPage(page + 1);
+                }}
+              >
+                下一页
+              </Button>
+            </Box>
+            <MySuspense loading={isLoading || !data}>
+              {data && data.results && (
+                <TaskList
+                  setTaskId={setTaskId}
+                  setTaskDetailModalOpen={setTaskDetailModalOpen}
+                  data={data.results}
+                />
+              )}
+            </MySuspense>
+          </Box>
+        </Sheet>
       </Box>
     </>
-  );
-}
-
-function EmptyContent() {
-  return (
-    <Sheet
-      sx={{
-        height: "70vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-      }}
-    >
-      <NotificationsOffTwoTone
-        sx={{
-          fontSize: "200px",
-        }}
-      />
-      <Typography level="body-lg">~暂无任务qwq~</Typography>
-    </Sheet>
   );
 }

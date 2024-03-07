@@ -13,7 +13,7 @@ export default function MySuspense(props: {
         <Sheet
           variant="plain"
           sx={{
-            background: "transparant",
+            background: "transparent",
             position: "relative",
             width: "100%",
             height: "100%",
