@@ -138,7 +138,6 @@ app.get('/api-paper/:paperId', useHeaders, async (req, res) => {
   try {
     if (!req.fetcher) throw new Error('Fetcher is undefined');
     const response = await req.fetcher.get(`https://api.fuulea.com/v2/papers/${paperId}/`);
-    console.log(response.data);
     res.json(response.data);
   } catch (error: any) {
     console.log(error);

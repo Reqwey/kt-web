@@ -32,7 +32,6 @@ interface CourseModulesDrawerProps {
   loading: boolean;
   moduleName: string | undefined;
   data: CourseModule[];
-  open: boolean;
   setOpen(value: boolean): void;
 }
 
@@ -109,7 +108,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = (props) => {
 };
 
 export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
-  const { loading, moduleName, data, open, setOpen } = props;
+  const { loading, moduleName, data, setOpen } = props;
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const navigate = useNavigate();
@@ -121,7 +120,7 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
         setOpen={setVideoOpen}
         videoUrl={videoUrl}
       />
-      <Drawer size="lg" open={open} onClose={() => setOpen(false)}>
+      <Drawer size="lg" open onClose={() => setOpen(false)}>
         <ModalClose />
         <DialogTitle>{moduleName}</DialogTitle>
         <DialogContent>
@@ -287,14 +286,11 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
                                 </Typography>
                               </div>
                               <Button
+                                component="a"
                                 variant="soft"
-                                onClick={() =>
-                                  item.paper &&
-                                  item.paper.id &&
-                                  navigate(`/paper/${item.paper.id}`, {
-                                    replace: true,
-                                  })
-                                }
+                                href={`/paper/${item.paper.id}`}
+                                target="_blank"
+                                rel="noreferrer"
                                 endDecorator={<ArrowForward />}
                                 sx={{
                                   ml: "auto",

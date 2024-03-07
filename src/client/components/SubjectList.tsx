@@ -18,45 +18,37 @@ const calcCount = (data: SubjectListData) =>
     return accumulator + subject.unfinished;
   }, 0);
 
+const getCountsData = (url: string) =>
+  getData(url, {
+    params: {
+      username: localStorage.getItem("userName"),
+      sn: localStorage.getItem("sn"),
+      token: localStorage.getItem("token"),
+    },
+  });
+
 const SubjectList: React.FC<SubjectListProps> = (props) => {
   const { subjectId, setSubjectId } = props;
-  const fromStorage = localStorage.getItem("subjectCounts");
-  const getCountsData = React.useCallback(
-    (url: string) =>
-      getData(url, {
-        params: {
-          username: localStorage.getItem("userName"),
-          sn: localStorage.getItem("sn"),
-          token: localStorage.getItem("token"),
-        },
-      }),
-    []
-  );
-  const { data, mutate } = useSWR("/api-unfinished-counts", getCountsData);
-  const [counts, setCounts] = React.useState<SubjectListData>(
-    data || (fromStorage ? JSON.parse(fromStorage) : { subjects: [] })
-  );
-  const [totalCount, setTotalCount] = React.useState<number>(
-    data
-      ? calcCount(data)
-      : fromStorage
-      ? calcCount(JSON.parse(fromStorage))
-      : 0
-  );
 
-  React.useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        let response = await mutate(getCountsData);
-        if (response && response.success) {
-          setCounts(response);
-          localStorage.setItem("subjectCounts", JSON.stringify(response));
-          setTotalCount(calcCount(response as SubjectListData));
-        }
-      } catch (e) {}
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  let totalCount = 0, counts: SubjectListData;
+  const subjectList = JSON.parse(localStorage.getItem("subjectList") as string);
+
+  const fromSWR: SubjectListData = useSWR(
+    "/api-unfinished-counts",
+    getCountsData
+  ).data;
+
+  if (fromSWR && fromSWR.success) {
+    localStorage.setItem("subjectCounts", JSON.stringify(fromSWR));
+    counts = fromSWR;
+    totalCount = calcCount(fromSWR);
+  } else {
+    const fromStorage = localStorage.getItem("subjectCounts");
+    if (fromStorage) {
+      counts = JSON.parse(fromStorage);
+      totalCount = calcCount(JSON.parse(fromStorage));
+    }
+  }
 
   const formatCount = (count: number) => {
     return count > 99 ? "99+" : count;
@@ -98,50 +90,48 @@ const SubjectList: React.FC<SubjectListProps> = (props) => {
             )}
           </ListItemButton>
         </ListItem>
-        {JSON.parse(localStorage.getItem("subjectList") as string).map(
-          (item: any) => (
-            <ListItem key={item.id}>
-              <ListItemButton
-                variant="plain"
-                color={subjectId === item.id ? "primary" : "neutral"}
-                onClick={() => {
-                  setSubjectId(item.id);
-                }}
-                sx={{
-                  fontSize: "sm",
-                  fontWeight: "lg",
-                  boxShadow: subjectId === item.id ? "sm" : "unset",
-                  backgroundColor:
-                    subjectId === item.id
-                      ? "var(--joy-palette-background-surface)"
-                      : "",
-                  display: "flex",
-                  justifyContent:
-                    counts &&
-                    counts.subjects.filter(
-                      (subject) => subject.subjectId === item.id
-                    ).length > 0
-                      ? "space-between"
-                      : "",
-                }}
-              >
-                {item.name}
-                {counts &&
+        {(subjectList || []).map((item: any) => (
+          <ListItem key={item.id}>
+            <ListItemButton
+              variant="plain"
+              color={subjectId === item.id ? "primary" : "neutral"}
+              onClick={() => {
+                setSubjectId(item.id);
+              }}
+              sx={{
+                fontSize: "sm",
+                fontWeight: "lg",
+                boxShadow: subjectId === item.id ? "sm" : "unset",
+                backgroundColor:
+                  subjectId === item.id
+                    ? "var(--joy-palette-background-surface)"
+                    : "",
+                display: "flex",
+                justifyContent:
+                  counts &&
                   counts.subjects.filter(
                     (subject) => subject.subjectId === item.id
-                  ).length > 0 && (
-                    <Chip size="sm" variant="solid" color="danger">
-                      {formatCount(
-                        counts.subjects.filter(
-                          (subject) => subject.subjectId === item.id
-                        )[0].unfinished
-                      )}
-                    </Chip>
-                  )}
-              </ListItemButton>
-            </ListItem>
-          )
-        )}
+                  ).length > 0
+                    ? "space-between"
+                    : "",
+              }}
+            >
+              {item.name}
+              {counts &&
+                counts.subjects.filter(
+                  (subject) => subject.subjectId === item.id
+                ).length > 0 && (
+                  <Chip size="sm" variant="solid" color="danger">
+                    {formatCount(
+                      counts.subjects.filter(
+                        (subject) => subject.subjectId === item.id
+                      )[0].unfinished
+                    )}
+                  </Chip>
+                )}
+            </ListItemButton>
+          </ListItem>
+        ))}
       </List>
     </ListItem>
   );

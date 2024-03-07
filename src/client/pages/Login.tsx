@@ -69,16 +69,21 @@ export default function Login() {
           password,
           sn,
         });
-        localStorage.setItem("userId", response.data.userId);
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("displayName", response.data.firstName);
-        localStorage.setItem(
-          "subjectList",
-          JSON.stringify(response.data.subjectList)
-        );
-        navigate("/dashboard", { replace: true });
+        if (response.posted) {
+          localStorage.setItem("userId", response.data.userId);
+          localStorage.setItem("token", response.data.token);
+          localStorage.setItem("displayName", response.data.firstName);
+          localStorage.setItem(
+            "subjectList",
+            JSON.stringify(response.data.subjectList)
+          );
+          navigate("/dashboard", { replace: true });
+        } else {
+          setErrorMessage(response.reason);
+        }
       } catch (error: any) {
-        setErrorMessage(error);
+        console.log(error);
+        setErrorMessage(error.toString() || 'Unknown Error');
       }
     },
     [username, password, sn]
