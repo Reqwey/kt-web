@@ -49,11 +49,12 @@ interface SearchModalProps {
   open: boolean;
   setOpen(value: boolean): void;
   setTaskId(value: number): void;
+  setUserTaskId(value: number): void;
   setTaskDetailModalOpen(value: boolean): void;
 }
 
 const SearchModal: React.FC<SearchModalProps> = (props) => {
-  const { open, setOpen, setTaskId, setTaskDetailModalOpen } = props;
+  const { open, setOpen, setTaskId, setUserTaskId, setTaskDetailModalOpen } = props;
   const [page, setPage] = useState(1);
   const [pattern, setPattern] = useState("");
 
@@ -93,6 +94,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
               <TaskList
                 data={data.results}
                 setTaskId={setTaskId}
+                setUserTaskId={setUserTaskId}
                 setTaskDetailModalOpen={setTaskDetailModalOpen}
               />
             )}
@@ -310,6 +312,7 @@ export default function Dashboard() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [taskId, setTaskId] = useState(0);
+  const [userTaskId, setUserTaskId] = useState(0);
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [category, setCategory] = useState<string>("unfinished");
   const [page, setPage] = useState(1);
@@ -434,13 +437,14 @@ export default function Dashboard() {
         open={searchModalOpen}
         setOpen={setSearchModalOpen}
         setTaskId={setTaskId}
+        setUserTaskId={setUserTaskId}
         setTaskDetailModalOpen={setTaskDetailModalOpen}
       />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
-      {!!taskId && (
+      {!!taskDetailModalOpen && (
         <TaskDetailModal
           taskId={taskId}
-          open={taskDetailModalOpen}
+          userTaskId={userTaskId}
           setOpen={setTaskDetailModalOpen}
         />
       )}
@@ -692,6 +696,7 @@ export default function Dashboard() {
               {data && data.results && (
                 <TaskList
                   setTaskId={setTaskId}
+                  setUserTaskId={setUserTaskId}
                   setTaskDetailModalOpen={setTaskDetailModalOpen}
                   data={data.results}
                 />

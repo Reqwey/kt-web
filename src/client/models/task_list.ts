@@ -13,15 +13,18 @@ import {
 } from "@mui/material/colors";
 
 export interface TaskListItem {
-  taskId: string;
+  taskId: number;
+  userTaskId: number;
+  subjectId: number;
   questionCount: number | null;
   attachmentCount: number | null;
+  markType: number;
   allowSubmitIfDelay: boolean;
   title: string;
   description: string | null;
-  publishedAt: string | null;
+  publishedAt: string;
   finishAt: string | null;
-  endAt: string | null;
+  endAt: string;
 }
 
 export interface TaskListData {
@@ -74,4 +77,14 @@ export function getSubjectColor(
     default:
       return blueGrey[variant];
   }
+}
+
+export function splitTime(time: string): string {
+  let newTime = new Date(time);
+  return newTime.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

@@ -34,17 +34,8 @@ import {
   ColorVariant,
   TaskListItem,
   getSubjectColor,
+  splitTime,
 } from "../models/task_list";
-
-function splitTime(time: string): string {
-  let newTime = new Date(time);
-  return newTime.toLocaleString("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function EmptyContent() {
   return (
@@ -73,18 +64,20 @@ interface TaskListProps {
   data: TaskListItem[];
   setTaskDetailModalOpen(value: boolean): void;
   setTaskId(value: number): void;
+  setUserTaskId(value: number): void;
 }
 
 const TaskList: React.FC<TaskListProps> = (props) => {
-  const { data, setTaskId, setTaskDetailModalOpen } = props;
+  const { data, setTaskId, setUserTaskId, setTaskDetailModalOpen } = props;
   const subjectList = JSON.parse(localStorage.getItem("subjectList") || "");
   return data.length > 0 ? (
     <List>
-      {data.map((task: any) => (
+      {data.map((task: TaskListItem) => (
         <ListItem
           key={task.taskId}
           onClick={() => {
             setTaskId(task.taskId);
+            setUserTaskId(task.userTaskId);
             setTaskDetailModalOpen(true);
           }}
         >

@@ -111,7 +111,6 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
   const { loading, moduleName, data, setOpen } = props;
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
-  const navigate = useNavigate();
 
   return (
     <>

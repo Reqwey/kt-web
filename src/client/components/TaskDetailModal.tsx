@@ -4,10 +4,6 @@ import {
   Chip,
   Button,
   IconButton,
-  List,
-  ListItem,
-  ListItemContent,
-  Link,
   Typography,
   Modal,
   ModalDialog,
@@ -15,51 +11,100 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Sheet,
   Skeleton,
+  Tab,
+  TabList,
+  Tabs,
+  tabClasses,
+  AspectRatio,
+  Card,
+  CardCover,
+  Grid,
+  CardContent,
 } from "@mui/joy";
 import {
-  InfoRounded,
   PeopleOutline,
   Close,
-  Fullscreen,
-  FullscreenExit,
-  ArticleTwoTone,
   ArrowForward,
   SchoolTwoTone,
+  PlayArrowRounded,
+  HistoryToggleOff,
+  OpenInFullRounded,
+  CloseFullscreenRounded,
+  InfoOutlined,
 } from "@mui/icons-material";
 import useSWR from "swr";
 import { getData } from "../methods/fetch_data";
+import MySuspense from "./MySuspense";
+import { TaskDetail, TaskInfoData } from "../models/task_info";
+import { AttachmentList } from "./CourseModulesDrawer";
+import VideoPlayerModal from "./VideoPlayerModal";
+import { splitTime } from "../models/task_list";
 
 interface TaskDetailModalOptions {
-  open: boolean;
   setOpen(value: boolean): void;
   taskId: number;
+  userTaskId: number;
 }
 
-interface TaskDetailProps {
-  title: string;
-  attachments: any[];
-  content: string;
-}
+const _getData = (url: string) =>
+  getData(url, {
+    params: {
+      username: localStorage.getItem("userName"),
+      sn: localStorage.getItem("sn"),
+      token: localStorage.getItem("token"),
+    },
+  });
 
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
-  const { open, setOpen, taskId } = props;
+  const { setOpen, taskId, userTaskId } = props;
   const [layout, setLayout] = useState("center" as "center" | "fullscreen");
-  const { data, isLoading, error } = useSWR(`/api-task-info/${taskId}`, (url) =>
-    getData(url, {
-      params: {
-        username: localStorage.getItem("userName"),
-        sn: localStorage.getItem("sn"),
-        token: localStorage.getItem("token"),
-      },
-    })
+  const [detailId, setDetailId] = useState(0);
+  const {
+    data: modalInfo,
+    isLoading: modalLoading,
+    error: modalError,
+  } = useSWR(`/api-task-info/${taskId}?userTaskId=${userTaskId}`, _getData);
+
+  const {
+    data: detailInfo,
+    isLoading: detailLoading,
+    error: detailError,
+  } = useSWR(
+    detailId !== 0
+      ? `/api-task-info/${taskId}?userTaskId=${userTaskId}&detailId=${detailId}`
+      : null,
+    _getData
   );
+
+  useEffect(() => {
+    if (modalInfo)
+      setDetailId((modalInfo as TaskInfoData).modules[0].userTaskDetailId);
+  }, [modalInfo]);
+
+  if (detailInfo) console.log(detailInfo);
+
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
 
   return (
     <>
-      <Modal open={!!open}>
-        <ModalDialog aria-labelledby="task-detail-modal-title" layout={layout}>
+      <VideoPlayerModal
+        open={videoOpen}
+        setOpen={setVideoOpen}
+        videoUrl={videoUrl}
+      />
+      <Modal open>
+        <ModalDialog
+          aria-labelledby="task-detail-modal-title"
+          layout={layout}
+          sx={{
+            borderRadius: layout === "center" ? "lg" : "unset",
+            width: layout === "center" ? "60vw" : "100vw",
+            height: layout === "center" ? "60vh" : "100vh",
+            transition: "all 0.3s ease-in-out",
+          }}
+        >
           <Box
             sx={{
               width: "100%",
@@ -73,22 +118,25 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               id="task-detail-modal-title"
               component="h2"
               noWrap={true}
-              startDecorator={!isLoading && <InfoRounded />}
+              startDecorator={!modalLoading && <InfoOutlined />}
               endDecorator={
-                !isLoading && (
+                !modalLoading && (
                   <Chip
                     variant="soft"
                     color="primary"
                     size="md"
                     startDecorator={<SchoolTwoTone />}
                   >
-                    {data.first_name}
+                    {modalInfo.firstName}
                   </Chip>
                 )
               }
+              sx={{ marginTop: -1 }}
             >
-              <Skeleton animation="wave" loading={isLoading}>
-                {isLoading ? "Lorem ipsum is placeholder text" : data.title}
+              <Skeleton animation="wave" loading={modalLoading}>
+                {modalLoading
+                  ? "Lorem ipsum is placeholder text"
+                  : modalInfo.title}
               </Skeleton>
             </Typography>
             <Box
@@ -97,22 +145,30 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: 1,
-                marginTop: -2,
+                marginTop: -1,
                 marginRight: -1,
               }}
             >
               <IconButton
-                variant="plain"
-                color="neutral"
+                variant="soft"
+                color="primary"
+                size="sm"
+                sx={{ borderRadius: "50%" }}
                 onClick={() => {
                   setLayout(layout === "center" ? "fullscreen" : "center");
                 }}
               >
-                {layout === "center" ? <Fullscreen /> : <FullscreenExit />}
+                {layout === "center" ? (
+                  <OpenInFullRounded />
+                ) : (
+                  <CloseFullscreenRounded />
+                )}
               </IconButton>
               <IconButton
-                variant="plain"
-                color="neutral"
+                variant="soft"
+                color="danger"
+                size="sm"
+                sx={{ borderRadius: "50%" }}
                 onClick={() => {
                   setOpen(false);
                 }}
@@ -123,178 +179,205 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
           </Box>
           <Divider />
           <Box width="100%" height="100%" overflow="auto">
-            <Skeleton
-              animation="wave"
-              loading={isLoading}
-              sx={{ position: "relative", width: "100%", height: "20vh" }}
-            >
-              {!isLoading &&
-                (data.detail.length === 1 &&
-                !(data.detail[0] as TaskDetailProps).title ? (
-                  <>
-                    {(data.detail[0] as TaskDetailProps).attachments.length ? (
-                      <Sheet
-                        variant="soft"
-                        color="neutral"
-                        sx={{ width: "100%", p: 1, borderRadius: "md" }}
+            <MySuspense loading={modalLoading}>
+              {!!modalInfo && (
+                <>
+                  {(modalInfo as TaskInfoData).modules.length > 1 && (
+                    <Tabs
+                      orientation="horizontal"
+                      sx={{ width: "100%" }}
+                      value={detailId}
+                      onChange={(_, value) => setDetailId(value as number)}
+                    >
+                      <TabList
+                        disableUnderline
+                        sx={{
+                          p: 0.5,
+                          gap: 0.5,
+                          borderRadius: "xl",
+                          bgcolor: "background.level1",
+                          [`& .${tabClasses.root}[aria-selected="true"]`]: {
+                            boxShadow: "sm",
+                            bgcolor: "background.surface",
+                          },
+                        }}
                       >
-                        <Chip
-                          size="sm"
-                          key="summary"
-                          color="primary"
-                          variant="solid"
-                        >
-                          {(data.detail[0] as TaskDetailProps).attachments
-                            .length + " 个附件"}
-                        </Chip>
-                        <br />
-                        {(data.detail[0] as TaskDetailProps).attachments.map(
-                          (file: any, index) => (
-                            <>
-                              <Link
-                                key={index}
-                                href={file.source_file}
+                        {(modalInfo as TaskInfoData).modules.map((module) => (
+                          <Tab
+                            disableIndicator
+                            key={module.userTaskDetailId}
+                            value={module.userTaskDetailId}
+                          >
+                            {module.title}
+                          </Tab>
+                        ))}
+                      </TabList>
+                    </Tabs>
+                  )}
+                  <MySuspense loading={detailLoading}>
+                    {!!detailInfo && (
+                      <>
+                        {!!(detailInfo as TaskDetail).paperId && (
+                          <Card color="primary" sx={{ mt: 1, boxShadow: "sm" }}>
+                            <CardContent
+                              orientation="horizontal"
+                              sx={{ width: "100%" }}
+                            >
+                              <div>
+                                <Typography fontSize="lg" fontWeight="lg">
+                                  {(detailInfo as TaskDetail).title ||
+                                    (modalInfo as TaskInfoData).title}
+                                </Typography>
+                                <Typography
+                                  level="body-xs"
+                                  startDecorator={
+                                    <HistoryToggleOff fontSize="small" />
+                                  }
+                                >
+                                  {splitTime(
+                                    (detailInfo as TaskDetail).task.endAt
+                                  )}
+                                </Typography>
+                              </div>
+                              <Button
+                                component="a"
+                                variant="soft"
+                                href={`/paper/${
+                                  (detailInfo as TaskDetail).paperId
+                                }`}
                                 target="_blank"
                                 rel="noreferrer"
-                                color="primary"
-                                startDecorator={<ArticleTwoTone />}
+                                endDecorator={<ArrowForward />}
+                                sx={{
+                                  ml: "auto",
+                                  alignSelf: "center",
+                                  fontWeight: 600,
+                                }}
                               >
-                                {file.name}
-                              </Link>
-                              <br />
-                            </>
-                          )
+                                进入任务
+                              </Button>
+                            </CardContent>
+                          </Card>
                         )}
-                      </Sheet>
-                    ) : (
-                      <></>
-                    )}
-                    <Box width="100%" position="relative">
-                      <div
-                        className="KtContent"
-                        style={{ width: "100%" }}
-                        dangerouslySetInnerHTML={{
-                          __html: (data.detail[0] as TaskDetailProps).content,
-                        }}
-                      ></div>
-                    </Box>
-                  </>
-                ) : (
-                  <List
-                    variant="outlined"
-                    color="neutral"
-                    sx={{
-                      width: "100%",
-                      overflowY: "auto",
-                      borderRadius: "sm",
-                    }}
-                  >
-                    {data.detail.map((task: any) =>
-                      task.paper_id ? (
-                        <ListItem key={"paper" + task.paper_id}>
-                          <ListItemContent>
-                            <Typography
-                              component="h4"
-                              fontWeight="bd"
-                              endDecorator={
-                                <Chip
-                                  size="sm"
-                                  variant="soft"
-                                  color={
-                                    task.is_finished ? "success" : "danger"
-                                  }
-                                >
-                                  {task.is_finished ? "已完成" : "未完成"}
-                                </Chip>
-                              }
-                            >
-                              {task.title}
-                            </Typography>
-                          </ListItemContent>
-                          <Button
-                            component="a"
-                            variant="soft"
-                            endDecorator={<ArrowForward />}
-                            href={`/paper/${task.paper_id}`}
-                            target="_blank"
-                            rel="noreferrer"
+                        {!!(detailInfo as TaskDetail).attachments && (
+                          <AttachmentList
+                            attachments={detailInfo.attachments}
+                          />
+                        )}
+                        {!!(detailInfo as TaskDetail).content && (
+                          <div
+                            style={{ width: "100%" }}
+                            dangerouslySetInnerHTML={{
+                              __html: detailInfo.content,
+                            }}
+                          ></div>
+                        )}
+                        {!!(detailInfo as TaskDetail).videos && (
+                          <Grid
+                            container
+                            spacing={{ xs: 2, md: 3 }}
+                            columns={{ xs: 2, sm: 4, md: 8 }}
+                            sx={{ flexGrow: 1 }}
                           >
-                            进入任务
-                          </Button>
-                        </ListItem>
-                      ) : task.exercise_id ? (
-                        <ListItem key={"exercise" + task.exercise_id}>
-                          <ListItemContent>
-                            <Typography
-                              component="h4"
-                              fontWeight="bd"
-                              endDecorator={
-                                <Chip
-                                  size="sm"
-                                  variant="soft"
-                                  color={
-                                    task.is_finished ? "success" : "danger"
-                                  }
+                            {(detailInfo as TaskDetail).videos.map((v) => (
+                              <Grid xs={2} sm={4} md={4} key={v.id}>
+                                <Card
+                                  sx={{
+                                    height: "min-content",
+                                    cursor: "pointer",
+                                    "&:hover": {
+                                      boxShadow: "md",
+                                      borderColor:
+                                        "neutral.outlinedHoverBorder",
+                                    },
+                                    bgcolor: "initial",
+                                    p: 0,
+                                  }}
+                                  onClick={() => {
+                                    setVideoUrl(v.video);
+                                    setVideoOpen(true);
+                                  }}
                                 >
-                                  {task.is_finished ? "已完成" : "未完成"}
-                                </Chip>
-                              }
-                            >
-                              {task.title}
-                            </Typography>
-                          </ListItemContent>
-                          <Button variant="soft" disabled onClick={() => {}}>
-                            暂不支持查看
-                          </Button>
-                        </ListItem>
-                      ) : task.chapter_id ? (
-                        <ListItem key={"chapter" + task.chapter_id}>
-                          <ListItemContent>
-                            <Typography
-                              component="h4"
-                              fontWeight="bd"
-                              endDecorator={
-                                <Chip
-                                  size="sm"
-                                  variant="soft"
-                                  color={
-                                    task.is_finished ? "success" : "danger"
-                                  }
-                                >
-                                  {task.is_finished ? "已完成" : "未完成"}
-                                </Chip>
-                              }
-                            >
-                              {task.title}
-                            </Typography>
-                          </ListItemContent>
-                          <Button
-                            variant="soft"
-                            endDecorator={<ArrowForward />}
-                            onClick={() => {}}
-                          >
-                            查看内容
-                          </Button>
-                        </ListItem>
-                      ) : (
-                        <></>
-                      )
+                                  <Box sx={{ position: "relative" }}>
+                                    <AspectRatio ratio="3/2">
+                                      <figure>
+                                        <img
+                                          src={v.cover}
+                                          srcSet={v.cover}
+                                          loading="lazy"
+                                          alt={v.title}
+                                        />
+                                      </figure>
+                                    </AspectRatio>
+                                    <CardCover
+                                      sx={{
+                                        opacity: 1,
+                                        transition: "0.1s ease-in",
+                                        background:
+                                          "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                                      }}
+                                    >
+                                      <div>
+                                        <Box
+                                          sx={{
+                                            p: 2,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                          }}
+                                        >
+                                          <PlayArrowRounded
+                                            sx={{
+                                              color: "#fff",
+                                              fontSize: "70px",
+                                              bgcolor: "rgba(0 0 0 / 0.2)",
+                                              borderRadius: "lg",
+                                            }}
+                                          />
+                                        </Box>
+                                      </div>
+                                    </CardCover>
+                                  </Box>
+                                  <Typography
+                                    level="body-lg"
+                                    fontWeight="lg"
+                                    sx={{
+                                      p: 2,
+                                      mt: -9,
+                                      zIndex: 114514,
+                                      color: "#fff",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {v.title}
+                                  </Typography>
+                                </Card>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        )}
+                      </>
                     )}
-                  </List>
-                ))}
-            </Skeleton>
+                  </MySuspense>
+                </>
+              )}
+            </MySuspense>
           </Box>
-          <Divider />
+          {!modalLoading &&
+            modalInfo.unfinishedStudents &&
+            modalInfo.unfinishedStudents.length > 0 && <Divider />}
           <Box sx={{ width: "100%", position: "relative" }}>
             <Skeleton
               animation="wave"
               variant="overlay"
               sx={{ width: "100%", height: "5vh", position: "relative" }}
-              loading={isLoading}
+              loading={modalLoading}
             >
-              {!isLoading &&
-                data.unfinished_students &&
-                data.unfinished_students.length > 0 && (
+              {!modalLoading &&
+                modalInfo.unfinishedStudents &&
+                modalInfo.unfinishedStudents.length > 0 && (
                   <Accordion>
                     <AccordionSummary>
                       <Typography
@@ -308,7 +391,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                         }}
                         endDecorator={
                           <Chip variant="solid" color="danger" size="sm">
-                            {data.unfinished_students.length}
+                            {modalInfo.unfinishedStudents.length}
                           </Chip>
                         }
                       >
@@ -322,7 +405,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                         fontSize="sm"
                         sx={{ "--Typography-gap": "0.5rem", p: 1 }}
                       >
-                        {data.unfinished_students.join("，")}
+                        {modalInfo.unfinishedStudents.join("，")}
                       </Typography>
                     </AccordionDetails>
                   </Accordion>

@@ -140,65 +140,42 @@ export function TaskPaper() {
             p: 3,
           }}
         >
-          <Box
-            sx={{
-              zIndex: "2",
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              p: 2,
-            }}
+          <Typography
+            id="task-paper-modal-title"
+            noWrap={true}
+            level="h1"
+            endDecorator={
+              <Stack
+                direction="row"
+                height="100%"
+                justifyContent="center"
+                alignItems="center"
+                spacing={2}
+              >
+                <Chip size="lg" variant="plain" color="primary">
+                  {data.subjectName}
+                </Chip>
+                <Switch
+                  size="lg"
+                  color={showAnswer ? "success" : "neutral"}
+                  slotProps={{
+                    input: { "aria-label": "显示答案" },
+                    thumb: {
+                      children: showAnswer ? (
+                        <VisibilityRounded />
+                      ) : (
+                        <VisibilityOffRounded />
+                      ),
+                    },
+                  }}
+                  checked={showAnswer}
+                  onChange={(event) => setShowAnswer(event.target.checked)}
+                />
+              </Stack>
+            }
           >
-            <Typography
-              id="task-paper-modal-title"
-              noWrap={true}
-              level="h1"
-              endDecorator={
-                <Stack
-                  direction="row"
-                  height="100%"
-                  justifyContent="center"
-                  alignItems="center"
-                  spacing={2}
-                >
-                  <Chip size="lg" variant="plain" color="primary">
-                    {data.subjectName}
-                  </Chip>
-                  <Switch
-                    size="lg"
-                    color={showAnswer ? "success" : "neutral"}
-                    slotProps={{
-                      input: { "aria-label": "显示答案" },
-                      thumb: {
-                        children: showAnswer ? (
-                          <VisibilityRounded />
-                        ) : (
-                          <VisibilityOffRounded />
-                        ),
-                      },
-                    }}
-                    checked={showAnswer}
-                    onChange={(event) => setShowAnswer(event.target.checked)}
-                  />
-                </Stack>
-              }
-            >
-              {data.name}
-            </Typography>
-            <Button
-              variant="plain"
-              color="primary"
-              onClick={() => {
-                setDrawerOpen(true);
-              }}
-              startDecorator={<ListAltRounded />}
-              sx={{ position: "fixed", right: 55 }}
-            >
-              大纲
-            </Button>
-          </Box>
+            {data.name}
+          </Typography>
           {data.attachments && data.attachments.length > 0 && (
             <Box px={2}>
               <AttachmentList attachments={data.attachments} />
@@ -212,6 +189,18 @@ export function TaskPaper() {
               setVideoUrl={setVideoUrl}
             />
           )}
+
+          <Button
+            variant="plain"
+            color="primary"
+            onClick={() => {
+              setDrawerOpen(true);
+            }}
+            startDecorator={<ListAltRounded />}
+            sx={{ position: "fixed", right: 40 }}
+          >
+            大纲
+          </Button>
         </Box>
       )}
     </>
