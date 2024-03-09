@@ -182,38 +182,41 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
             <MySuspense loading={modalLoading}>
               {!!modalInfo && (
                 <>
-                  {(modalInfo as TaskInfoData).taskModules.length > 1 && (
-                    <Tabs
-                      orientation="horizontal"
-                      sx={{ width: "100%" }}
-                      value={detailId}
-                      onChange={(_, value) => setDetailId(value as number)}
-                    >
-                      <TabList
-                        disableUnderline
-                        sx={{
-                          p: 0.5,
-                          gap: 0.5,
-                          borderRadius: "xl",
-                          bgcolor: "background.level1",
-                          [`& .${tabClasses.root}[aria-selected="true"]`]: {
-                            boxShadow: "sm",
-                            bgcolor: "background.surface",
-                          },
-                        }}
+                  {!!(modalInfo as TaskInfoData).taskModules &&
+                    (modalInfo as TaskInfoData).taskModules.length > 1 && (
+                      <Tabs
+                        orientation="horizontal"
+                        sx={{ width: "100%" }}
+                        value={detailId}
+                        onChange={(_, value) => setDetailId(value as number)}
                       >
-                        {(modalInfo as TaskInfoData).taskModules.map((module) => (
-                          <Tab
-                            disableIndicator
-                            key={module.userTaskDetailId}
-                            value={module.userTaskDetailId}
-                          >
-                            {module.title}
-                          </Tab>
-                        ))}
-                      </TabList>
-                    </Tabs>
-                  )}
+                        <TabList
+                          disableUnderline
+                          sx={{
+                            p: 0.5,
+                            gap: 0.5,
+                            borderRadius: "xl",
+                            bgcolor: "background.level1",
+                            [`& .${tabClasses.root}[aria-selected="true"]`]: {
+                              boxShadow: "sm",
+                              bgcolor: "background.surface",
+                            },
+                          }}
+                        >
+                          {(modalInfo as TaskInfoData).taskModules.map(
+                            (module) => (
+                              <Tab
+                                disableIndicator
+                                key={module.userTaskDetailId}
+                                value={module.userTaskDetailId}
+                              >
+                                {module.title}
+                              </Tab>
+                            )
+                          )}
+                        </TabList>
+                      </Tabs>
+                    )}
                   <MySuspense loading={detailLoading}>
                     {!!detailInfo && (
                       <>
