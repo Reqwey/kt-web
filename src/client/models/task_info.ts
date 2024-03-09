@@ -4,7 +4,7 @@ import { TaskListItem } from "./task_list";
 export interface TaskInfoData {
 	title: string;
 	firstName: string;
-	modules: TaskModule[];
+	taskModules: TaskModule[];
 	unfinishedStudents: string[];
 }
 

@@ -148,7 +148,7 @@ app.get("/api-task-info/:taskId", useHeaders, async (req, res) => {
         title: v1Data.title,
         firstName: v1Data.first_name,
         unfinishedStudents: v1Data.unfinished_students,
-        modules: v2Data,
+        taskModules: v2Data,
       });
     } else {
       const { data } = await req.fetcher.get(

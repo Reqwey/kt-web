@@ -79,7 +79,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
 
   useEffect(() => {
     if (modalInfo)
-      setDetailId((modalInfo as TaskInfoData).modules[0].userTaskDetailId);
+      setDetailId((modalInfo as TaskInfoData).taskModules[0].userTaskDetailId);
   }, [modalInfo]);
 
   if (detailInfo) console.log(detailInfo);
@@ -182,7 +182,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
             <MySuspense loading={modalLoading}>
               {!!modalInfo && (
                 <>
-                  {(modalInfo as TaskInfoData).modules.length > 1 && (
+                  {(modalInfo as TaskInfoData).taskModules.length > 1 && (
                     <Tabs
                       orientation="horizontal"
                       sx={{ width: "100%" }}
@@ -202,7 +202,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                           },
                         }}
                       >
-                        {(modalInfo as TaskInfoData).modules.map((module) => (
+                        {(modalInfo as TaskInfoData).taskModules.map((module) => (
                           <Tab
                             disableIndicator
                             key={module.userTaskDetailId}
