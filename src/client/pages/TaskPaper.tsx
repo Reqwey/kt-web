@@ -133,17 +133,17 @@ export function TaskPaper() {
             display: "flex",
             flexGrow: 1,
             flexDirection: "column",
-            height: "100vh",
-            width: "100vw",
+            width: "100%",
             overflow: "auto",
             bgcolor: "neutral.outlinedHoverBg",
             p: 3,
           }}
         >
           <Typography
-            id="task-paper-modal-title"
+            id="task-paper-title"
             noWrap={true}
             level="h1"
+            sx={{ ml: 2 }}
             endDecorator={
               <Stack
                 direction="row"
