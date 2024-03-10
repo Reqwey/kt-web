@@ -254,7 +254,7 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
                   sx={{
                     p: 2,
                     mt: -9,
-                    zIndex: 114514,
+                    zIndex: 11,
                     color: "#fff",
                     whiteSpace: "nowrap",
                     overflow: "hidden",

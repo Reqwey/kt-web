@@ -78,7 +78,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   );
 
   useEffect(() => {
-    if (modalInfo)
+    if (modalInfo && (modalInfo as TaskInfoData).taskModules)
       setDetailId((modalInfo as TaskInfoData).taskModules[0].userTaskDetailId);
   }, [modalInfo]);
 
@@ -100,8 +100,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
           layout={layout}
           sx={{
             borderRadius: layout === "center" ? "lg" : "unset",
-            width: layout === "center" ? "60vw" : "100vw",
-            height: layout === "center" ? "60vh" : "100vh",
+            width: layout === "center" ? "60dvw" : "100dvw",
+            height: layout === "center" ? "60dvh" : "100dvh",
             transition: "all 0.3s ease-in-out",
           }}
         >
@@ -375,7 +375,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
             <Skeleton
               animation="wave"
               variant="overlay"
-              sx={{ width: "100%", height: "5vh", position: "relative" }}
+              sx={{ width: "100%", height: "5dvh", position: "relative" }}
               loading={modalLoading}
             >
               {!modalLoading &&

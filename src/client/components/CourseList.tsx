@@ -82,8 +82,8 @@ export default function CourseList(props: CourseListProps) {
         sx={{
           "--Grid-borderWidth": "1px",
           overflow: "hidden",
-          width: "100vw",
-          height: "100vh",
+          width: "100dvw",
+          height: "100dvh",
           borderTop: "var(--Grid-borderWidth) solid",
           borderLeft: "var(--Grid-borderWidth) solid",
           borderColor: "divider",

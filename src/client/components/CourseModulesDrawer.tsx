@@ -56,10 +56,11 @@ export const AttachmentList: React.FC<AttachmentListProps> = (props) => {
     <Stack>
       {props.attachments.map((a) => (
         <Card
+          component="a"
           color="primary"
           variant="outlined"
           sx={{
-            cursor: "pointer",
+            textDecoration: "none",
             my: 1,
             boxShadow: "sm",
             ":hover": {
@@ -68,9 +69,9 @@ export const AttachmentList: React.FC<AttachmentListProps> = (props) => {
           }}
           key={a.id}
           orientation="horizontal"
-          onClick={() => {
-            window.location.href = a.sourceFile;
-          }}
+          href={a.sourceFile}
+          target="_blank"
+          rel="noreferrer"
         >
           <CardOverflow
             variant="soft"
