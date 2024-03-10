@@ -4,6 +4,8 @@ import axios, { AxiosInstance } from "axios";
 import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import { createServer } from "https";
+import { readFileSync } from "fs";
 
 dotenv.config();
 
@@ -254,14 +256,17 @@ app.get(
   }
 );
 
-app.get("/hello", (_, res) => {
-  res.send("Hello Vite + React + TypeScript!");
-});
-
 if (process.env.PORT && parseInt(process.env.PORT)) {
-  ViteExpress.listen(app, parseInt(process.env.PORT), () =>
+  const server = createServer(
+    {
+      key: readFileSync("privkey.pem"),
+      cert: readFileSync("fullchain.pem"),
+    },
+    app
+  ).listen(parseInt(process.env.PORT), () =>
     console.log("Server is listening on port", process.env.PORT)
   );
+  ViteExpress.bind(app, server);
 } else {
   throw new Error("Error setting PORT in .env");
 }

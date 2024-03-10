@@ -550,6 +550,7 @@ export default function Dashboard() {
             zIndex: 100, // 确保分隔条位于最上层
             ":hover": {
               backgroundColor: "primary.plainColor",
+              transition: "0.1s ease-in",
               ">div": {
                 display: "flex",
               },
@@ -569,7 +570,7 @@ export default function Dashboard() {
               alignItems: "center",
               justifyContent: "center",
               backgroundColor: "primary.plainColor",
-              borderRadius: "50%",
+              borderRadius: "25%",
             }}
           >
             <DragIndicator

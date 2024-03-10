@@ -88,6 +88,7 @@ const TaskList: React.FC<TaskListProps> = (props) => {
               width: "100%",
               cursor: "pointer",
               boxShadow: "sm",
+              transition: "0.2s all",
               ":hover": { boxShadow: "md" },
             }}
           >
