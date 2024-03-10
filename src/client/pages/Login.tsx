@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import {
@@ -49,7 +49,7 @@ const AlertMessage: React.FC<props> = (props) => {
 
 export default function Login() {
   const navigate = useNavigate();
-  const { trigger, isMutating } = useSWRMutation("/api-login", postData, );
+  const { trigger, isMutating } = useSWRMutation("/api-login", postData);
 
   const [username, setUsername] = useState(
     ("" || localStorage.getItem("userName")) as string
@@ -83,11 +83,16 @@ export default function Login() {
         }
       } catch (error: any) {
         console.log(error);
-        setErrorMessage(error.toString() || 'Unknown Error');
+        setErrorMessage(error.toString() || "Unknown Error");
       }
     },
     [username, password, sn]
   );
+
+  useEffect(() => {
+    if (localStorage.getItem("token"))
+      navigate("/dashboard", { replace: true });
+  }, []);
 
   return (
     <>

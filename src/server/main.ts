@@ -257,16 +257,22 @@ app.get(
 );
 
 if (process.env.PORT && parseInt(process.env.PORT)) {
-  const server = createServer(
-    {
-      key: readFileSync("privkey.pem"),
-      cert: readFileSync("fullchain.pem"),
-    },
-    app
-  ).listen(parseInt(process.env.PORT), () =>
-    console.log("Server is listening on port", process.env.PORT)
-  );
-  ViteExpress.bind(app, server);
+  if (process.env.NODE_ENV === "production") {
+    const server = createServer(
+      {
+        key: readFileSync("privkey.pem"),
+        cert: readFileSync("fullchain.pem"),
+      },
+      app
+    ).listen(parseInt(process.env.PORT), () =>
+      console.log("Server is listening on port", process.env.PORT)
+    );
+    ViteExpress.bind(app, server);
+  } else {
+    ViteExpress.listen(app, parseInt(process.env.PORT), () =>
+      console.log("Server is listening on port", process.env.PORT)
+    );
+  }
 } else {
   throw new Error("Error setting PORT in .env");
 }
