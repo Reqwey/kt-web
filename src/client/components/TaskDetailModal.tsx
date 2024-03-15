@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Chip,
@@ -21,6 +21,8 @@ import {
   CardCover,
   Grid,
   CardContent,
+  Stack,
+  ModalOverflow,
 } from "@mui/joy";
 import {
   PeopleOutline,
@@ -32,14 +34,17 @@ import {
   OpenInFullRounded,
   CloseFullscreenRounded,
   InfoOutlined,
+  Done,
+  DoneAllRounded,
 } from "@mui/icons-material";
 import useSWR from "swr";
-import { getData } from "../methods/fetch_data";
+import { getData, postData } from "../methods/fetch_data";
 import MySuspense from "./MySuspense";
 import { TaskDetail, TaskInfoData } from "../models/task_info";
 import { AttachmentList } from "./CourseModulesDrawer";
 import VideoPlayerModal from "./VideoPlayerModal";
 import { splitTime } from "../models/task_list";
+import useSWRMutation from "swr/mutation";
 
 interface TaskDetailModalOptions {
   setOpen(value: boolean): void;
@@ -59,7 +64,12 @@ const _getData = (url: string) =>
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const { setOpen, taskId, userTaskId } = props;
   const [layout, setLayout] = useState("center" as "center" | "fullscreen");
-  const [detailId, setDetailId] = useState(0);
+  const [detail, setDetail] = useState<{ index: number; id: number }>({
+    index: -1,
+    id: 0,
+  });
+  const [markFinishButtonShow, setMarkFinishButtonShow] = useState(false);
+
   const {
     data: modalInfo,
     isLoading: modalLoading,
@@ -70,19 +80,44 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
     data: detailInfo,
     isLoading: detailLoading,
     error: detailError,
+    mutate: mutateDetail,
   } = useSWR(
-    detailId !== 0
-      ? `/api-task-info/${taskId}?userTaskId=${userTaskId}&detailId=${detailId}`
+    detail.index !== -1
+      ? `/api-task-info/${taskId}?userTaskId=${userTaskId}&detailId=${detail.id}`
       : null,
     _getData
   );
 
+  const { trigger, isMutating } = useSWRMutation("/api-mark-finish", postData);
+
   useEffect(() => {
     if (modalInfo && (modalInfo as TaskInfoData).taskModules)
-      setDetailId((modalInfo as TaskInfoData).taskModules[0].userTaskDetailId);
+      setDetail({
+        index: 0,
+        id: (modalInfo as TaskInfoData).taskModules[0].userTaskDetailId,
+      });
   }, [modalInfo]);
 
-  if (detailInfo) console.log(detailInfo);
+  useEffect(() => {
+    setMarkFinishButtonShow(true);
+  }, [detail]);
+
+  const handleMarkfinish = useCallback(async () => {
+    try {
+      await trigger({
+        taskId: (detailInfo as TaskDetail).task.id,
+        detailId: (detailInfo as TaskDetail).taskDetailId,
+        username: localStorage.getItem("userName"),
+        sn: localStorage.getItem("sn"),
+        token: localStorage.getItem("token"),
+      });
+      setMarkFinishButtonShow(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      mutateDetail();
+    }
+  }, [detail, detailInfo]);
 
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
@@ -186,9 +221,14 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                     (modalInfo as TaskInfoData).taskModules.length > 1 && (
                       <Tabs
                         orientation="horizontal"
-                        sx={{ width: "100%" }}
-                        value={detailId}
-                        onChange={(_, value) => setDetailId(value as number)}
+                        sx={{ width: "100%", mb: 1 }}
+                        value={`${detail.index}/${detail.id}`}
+                        onChange={(_, value) => {
+                          const [index, id] = (value as string)
+                            .split("/")
+                            .map((x) => parseInt(x));
+                          setDetail({ index, id });
+                        }}
                       >
                         <TabList
                           disableUnderline
@@ -204,11 +244,11 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                           }}
                         >
                           {(modalInfo as TaskInfoData).taskModules.map(
-                            (module) => (
+                            (module, index) => (
                               <Tab
                                 disableIndicator
                                 key={module.userTaskDetailId}
-                                value={module.userTaskDetailId}
+                                value={`${index}/${module.userTaskDetailId}`}
                               >
                                 {module.title}
                               </Tab>
@@ -219,9 +259,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                     )}
                   <MySuspense loading={detailLoading}>
                     {!!detailInfo && (
-                      <>
+                      <Box width="100%" position="relative">
                         {!!(detailInfo as TaskDetail).paperId && (
-                          <Card color="primary" sx={{ mt: 1, boxShadow: "sm" }}>
+                          <Card color="primary" sx={{ boxShadow: "sm" }}>
                             <CardContent
                               orientation="horizontal"
                               sx={{ width: "100%" }}
@@ -231,16 +271,56 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                   {(detailInfo as TaskDetail).title ||
                                     (modalInfo as TaskInfoData).title}
                                 </Typography>
-                                <Typography
-                                  level="body-xs"
-                                  startDecorator={
-                                    <HistoryToggleOff fontSize="small" />
-                                  }
-                                >
-                                  {splitTime(
-                                    (detailInfo as TaskDetail).task.endAt
-                                  )}
-                                </Typography>
+                                {(modalInfo as TaskInfoData).taskModules[
+                                  detail.index
+                                ].finishAt ? (
+                                  <Typography
+                                    color="success"
+                                    startDecorator={
+                                      <Done fontSize="small" color="success" />
+                                    }
+                                    level="body-xs"
+                                  >
+                                    {splitTime(
+                                      (modalInfo as TaskInfoData).taskModules[
+                                        detail.index
+                                      ].finishAt as string
+                                    )}
+                                  </Typography>
+                                ) : (
+                                  <Stack direction="row">
+                                    <Typography
+                                      color="warning"
+                                      level="body-xs"
+                                      startDecorator={
+                                        <HistoryToggleOff
+                                          fontSize="small"
+                                          color="warning"
+                                        />
+                                      }
+                                    >
+                                      {splitTime(
+                                        (detailInfo as TaskDetail).task.endAt
+                                      )}
+                                    </Typography>
+                                    <Chip
+                                      variant="outlined"
+                                      color={
+                                        (detailInfo as TaskDetail).task
+                                          .allowSubmitIfDelay
+                                          ? "success"
+                                          : "danger"
+                                      }
+                                      size="sm"
+                                      sx={{ ml: 1 }}
+                                    >
+                                      {(detailInfo as TaskDetail).task
+                                        .allowSubmitIfDelay
+                                        ? "允许晚交"
+                                        : "不可晚交"}
+                                    </Chip>
+                                  </Stack>
+                                )}
                               </div>
                               <Button
                                 component="a"
@@ -268,12 +348,15 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                           />
                         )}
                         {!!(detailInfo as TaskDetail).content && (
-                          <div
-                            style={{ width: "100%" }}
+                          <Box
+                            className="KtContent"
+                            width="100%"
+                            p={1}
+                            pb={6}
                             dangerouslySetInnerHTML={{
                               __html: detailInfo.content,
                             }}
-                          ></div>
+                          ></Box>
                         )}
                         {!!(detailInfo as TaskDetail).videos && (
                           <Grid
@@ -361,7 +444,29 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             ))}
                           </Grid>
                         )}
-                      </>
+                        {!(detailInfo as TaskDetail).paperId &&
+                          !(modalInfo as TaskInfoData).taskModules[detail.index]
+                            .finishAt &&
+                          markFinishButtonShow && (
+                            <Box
+                              width="100%"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              position="absolute"
+                              bottom={0}
+                            >
+                              <Button
+                                onClick={handleMarkfinish}
+                                loading={isMutating}
+                                startDecorator={<DoneAllRounded />}
+                                sx={{ boxShadow: "lg" }}
+                              >
+                                标记为完成
+                              </Button>
+                            </Box>
+                          )}
+                      </Box>
                     )}
                   </MySuspense>
                 </>

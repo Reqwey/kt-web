@@ -11,23 +11,26 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import "./App.css";
 import { TaskPaper } from "./pages/TaskPaper";
+import { SWRConfig } from "swr";
 
 export default function App() {
   return (
     <ErrorBoundary
       fallback={<Typography>Something went wrong. Try to reload.</Typography>}
     >
-      <JoyCssVarsProvider disableTransitionOnChange theme={customTheme}>
-        <CssBaseline />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/paper/:paperId" element={<TaskPaper />} />
-            <Route path="/courses" element={<Courses />} />
-          </Routes>
-        </Router>
-      </JoyCssVarsProvider>
+      <SWRConfig value={{ refreshInterval: 2000 }}>
+        <JoyCssVarsProvider disableTransitionOnChange theme={customTheme}>
+          <CssBaseline />
+          <Router>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/paper/:paperId" element={<TaskPaper />} />
+              <Route path="/courses" element={<Courses />} />
+            </Routes>
+          </Router>
+        </JoyCssVarsProvider>
+      </SWRConfig>
     </ErrorBoundary>
   );
 }

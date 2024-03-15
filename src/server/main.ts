@@ -26,12 +26,11 @@ app.use(cookieParser());
 const cookies: Map<string, string> = new Map();
 
 const useHeaders: RequestHandler = (req, res, next) => {
-  const { username } = req.query;
-
   const fetcher = axios.create();
 
   fetcher.interceptors.request.use(
     (config) => {
+      config.method
       config.headers["User-Agent"] =
         "saturn/2.3.0 (Android 7.0/LingChuang) 2.3.0-base";
       config.headers["Content-Type"] = "application/json";
@@ -39,11 +38,15 @@ const useHeaders: RequestHandler = (req, res, next) => {
       config.headers["version"] = "2.2.1";
       config.headers["Connection"] = "keep-alive";
       config.headers["serial"] = req.body.sn || req.query.sn || "";
-      if (req.query.token)
-        config.headers["authorization"] = `jwt ${req.query.token}`;
       config.headers["uuid"] = Math.random().toString(36).slice(-8);
+
+      const token = req.query.token || req.body.token;
+      if (token) config.headers["authorization"] = `jwt ${token}`;
+
+      const username = req.query.username || req.body.username;
       if (username)
         config.headers["Cookie"] = cookies.get(username as string) || "";
+
       return config;
     },
     (error) => {
@@ -216,7 +219,7 @@ app.get("/api-course-detail/:id", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.json({});
   }
 });
 
@@ -232,7 +235,7 @@ app.get("/api-course-detail-chapters/:id", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.json({});
   }
 });
 
@@ -251,10 +254,26 @@ app.get(
       res.json(response.data);
     } catch (error: any) {
       console.log(error);
-      res.json([]);
+      res.json({});
     }
   }
 );
+
+app.post("/api-mark-finish", useHeaders, async (req, res) => {
+  const { taskId, detailId } = req.body;
+
+  try {
+    if (!req.fetcher) throw new Error("Fetcher is undefined");
+    const response = await req.fetcher.post(
+      `https://api.fuulea.com/v2/tasks/${taskId}/detail/${detailId}/mark-finish/`
+    );
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.log(error);
+    res.json({});
+  }
+});
 
 if (process.env.PORT && parseInt(process.env.PORT)) {
   if (process.env.NODE_ENV === "production") {

@@ -54,7 +54,8 @@ interface SearchModalProps {
 }
 
 const SearchModal: React.FC<SearchModalProps> = (props) => {
-  const { open, setOpen, setTaskId, setUserTaskId, setTaskDetailModalOpen } = props;
+  const { open, setOpen, setTaskId, setUserTaskId, setTaskDetailModalOpen } =
+    props;
   const [page, setPage] = useState(1);
   const [pattern, setPattern] = useState("");
 
@@ -492,6 +493,7 @@ export default function Dashboard() {
                 variant="plain"
                 color="danger"
                 onClick={() => {
+                  localStorage.removeItem("token");
                   navigate("/", { replace: true });
                 }}
               >

@@ -1,5 +1,4 @@
 import { CourseAttachment, CourseVideo } from "./course";
-import { TaskListItem } from "./task_list";
 
 export interface TaskInfoData {
 	title: string;
@@ -12,6 +11,11 @@ export interface TaskModule {
 	title: string;
 	extraType: number;
 	userTaskDetailId: number;
+	taskDetailId: number;
+	finishAt: string | null;
+	correctAt: string | null;
+	correctPercent: number | null;
+	exerciseId: number;
 }
 
 export interface TaskDetail {
@@ -19,6 +23,13 @@ export interface TaskDetail {
 	content: string | null;
 	attachments: CourseAttachment[];
 	videos: CourseVideo[];
-	paperId: number | null;
-	task: TaskListItem;
+	paperId: number | null | undefined;
+	taskDetailId: number;
+	task: {
+		id: number;
+		allowSubmitIfDelay: boolean;
+		markType: number;
+		endAt: string;
+		showAnswerAt: string | null;
+	}
 }
