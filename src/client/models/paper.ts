@@ -5,11 +5,11 @@ export interface Choice {
   content: string;
 }
 
-export interface ProblemTree {
+export interface PaperTree {
   id: number;
   paperQuestionId: number;
   no?: string;
-  children: ProblemTree[];
+  children: PaperTree[];
   model: number;
   modelName: string;
   subModel: number | null;
@@ -33,7 +33,7 @@ export interface PaperData {
   subjectName: string;
   name: string;
   apiSummary: string;
-  questions: ProblemTree[];
+  questions: PaperTree[];
   attachments: CourseAttachment[];
   nonParentPaperQuestions: number[];
 }

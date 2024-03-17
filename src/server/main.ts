@@ -184,6 +184,21 @@ app.get("/api-paper/:paperId", useHeaders, async (req, res) => {
   }
 });
 
+app.get("/api-exercise/:exerciseId", useHeaders, async (req, res) => {
+  const { exerciseId } = req.params;
+
+  try {
+    if (!req.fetcher) throw new Error("Fetcher is undefined");
+    const response = await req.fetcher.get(
+      `https://api.fuulea.com/v2/exercises/${exerciseId}`
+    );
+    res.json(response.data);
+  } catch (error: any) {
+    console.log(error);
+    res.json([]);
+  }
+});
+
 app.get("/api-courses/:mode", useHeaders, async (req, res) => {
   const { mode } = req.params;
 
@@ -281,18 +296,26 @@ app.post("/api-check-paper", useHeaders, async (req, res) => {
 
   try {
     if (!req.fetcher) throw new Error("Fetcher is undefined");
-    let searchParams;
-    if (taskId) searchParams = `scene=0&taskId=${taskId}`;
-    else searchParams = `scene=1&type=`;
-    const response = await req.fetcher.post(
+
+    let searchParams = taskId ? `scene=0&taskId=${taskId}` : `scene=1&type=`;
+
+    const {
+      data: { celeryTaskId },
+    } = await req.fetcher.post(
       `https://api.fuulea.com/v2/papers/${paperId}/check/?${searchParams}`,
       { ...req.body }
     );
+    const { data } = await req.fetcher.get(
+      `https://api.fuulea.com/v2/papers/check/result/?celeryTaskId=${celeryTaskId}`
+    );
 
-    res.json(response.data);
+    res.json({ success: true, ...data });
   } catch (error: any) {
     console.log(error);
-    res.json({});
+    res.json({
+      success: false,
+      reason: error.response?.data.detail || error.message,
+    });
   }
 });
 

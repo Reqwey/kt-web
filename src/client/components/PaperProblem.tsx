@@ -20,11 +20,11 @@ import {
   ListItemButton,
 } from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
-import { Answer, ProblemTree } from "../models/paper";
-import useDebouncedCallback from "../methods/use_debounce_callback";
+import { Answer, PaperTree } from "../models/paper.js";
+import useDebouncedCallback from "../methods/use_debounce_callback.js";
 
 interface RenderProblemProps {
-  questions: ProblemTree[];
+  questions: PaperTree[];
   showProper: boolean;
   answers: Answer[];
   handleAnswerChange: (
@@ -37,7 +37,7 @@ interface RenderProblemProps {
   setVideoOpen: (open: boolean) => void;
 }
 
-const RenderProblem: React.FC<RenderProblemProps> = (props) => {
+const PaperProblem: React.FC<RenderProblemProps> = (props) => {
   const {
     questions,
     showProper,
@@ -48,7 +48,7 @@ const RenderProblem: React.FC<RenderProblemProps> = (props) => {
   } = props;
 
   const handleInputChange = useDebouncedCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, item: ProblemTree) => {
+    (event: React.ChangeEvent<HTMLInputElement>, item: PaperTree) => {
       handleAnswerChange(item.id, item.no as string, event.target.value, false);
     },
     500
@@ -189,7 +189,7 @@ const RenderProblem: React.FC<RenderProblemProps> = (props) => {
               </List>
             )}
             {item.model === 3 && item.children && (
-              <RenderProblem
+              <PaperProblem
                 showProper={showProper}
                 questions={item.children}
                 answers={answers}
@@ -328,4 +328,4 @@ const RenderProblem: React.FC<RenderProblemProps> = (props) => {
   );
 };
 
-export default RenderProblem;
+export default PaperProblem;

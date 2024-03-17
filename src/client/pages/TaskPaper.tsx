@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
-import RenderProblem from "../components/RenderProblem";
+import PaperProblem from "../components/PaperProblem";
 import LoadingModal from "../components/LoadingModal";
 import VideoPlayerModal from "../components/VideoPlayerModal";
 import {
   FormatListBulletedRounded,
+  InfoRounded,
   LinkRounded,
   VisibilityOffRounded,
   VisibilityRounded,
+  WarningRounded,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -26,8 +28,9 @@ import {
   Stack,
   Switch,
   Button,
+  Snackbar,
 } from "@mui/joy";
-import { Answer, AnswerData, PaperData, ProblemTree } from "../models/paper";
+import { Answer, AnswerData, PaperData, PaperTree } from "../models/paper";
 import { AttachmentList } from "../components/CourseModulesDrawer";
 import { useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
@@ -36,10 +39,7 @@ import useSWRMutation from "swr/mutation";
 
 export function TaskPaper() {
   const { taskId, paperId } = useParams();
-
-  const [flattenedQuestions, setFlattenedQuestions] = useState<ProblemTree[]>(
-    []
-  );
+  const [flattenedQuestions, setFlattenedQuestions] = useState<PaperTree[]>([]);
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -51,6 +51,11 @@ export function TaskPaper() {
     photo: null,
     vocabularySchedule: null,
   });
+  const [snackbarColor, setSnackbarColor] = useState<"danger" | "success">(
+    "danger"
+  );
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const timeRef = useRef(0);
 
@@ -115,7 +120,7 @@ export function TaskPaper() {
           };
         });
       console.log(allAnswer);
-      await trigger({
+      const response = await trigger({
         taskId,
         paperId,
         ...answerData,
@@ -125,9 +130,20 @@ export function TaskPaper() {
         sn: localStorage.getItem("sn"),
         token: localStorage.getItem("token"),
       });
-      console.log("Submitted successfully");
-    } catch (err) {
+      if (response.success) {
+        setSnackbarColor("success");
+        setSnackbarMessage("提交成功！请在平板上查看并阅卷");
+        setSnackbarOpen(true);
+      } else {
+        setSnackbarColor("danger");
+        setSnackbarMessage(response.reason as string);
+        setSnackbarOpen(true);
+      }
+    } catch (err: any) {
       console.log(err);
+      setSnackbarColor("danger");
+      setSnackbarMessage(err.message);
+      setSnackbarOpen(true);
     }
   }, [answerData, flattenedQuestions]);
 
@@ -141,6 +157,19 @@ export function TaskPaper() {
         </title>
       </Helmet>
       <LoadingModal loading={isLoading} />
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        autoHideDuration={4000}
+        open={snackbarOpen}
+        onClose={() => setSnackbarOpen(false)}
+        color={snackbarColor}
+        variant="soft"
+        startDecorator={
+          snackbarColor === "success" ? <InfoRounded /> : <WarningRounded />
+        }
+      >
+        {snackbarMessage}
+      </Snackbar>
       <VideoPlayerModal
         open={videoOpen}
         setOpen={setVideoOpen}
@@ -202,6 +231,7 @@ export function TaskPaper() {
             flexGrow: 1,
             flexDirection: "column",
             width: "100%",
+            minHeight: "100dvh",
             overflow: "auto",
             bgcolor: "neutral.outlinedHoverBg",
             p: 1,
@@ -226,7 +256,7 @@ export function TaskPaper() {
             </Box>
           )}
           {data.questions && data.questions.length > 0 && (
-            <RenderProblem
+            <PaperProblem
               showProper={showProper}
               questions={data.questions}
               answers={answerData.answer}
