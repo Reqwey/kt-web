@@ -41,7 +41,7 @@ import TaskDetailModal from "../components/TaskDetailModal";
 import SubjectList from "../components/SubjectList";
 
 import config from "../../../package.json";
-import useSWR from "swr";
+import useSWR, { SWRConfig } from "swr";
 import { getData } from "../methods/fetch_data";
 import MySuspense from "../components/MySuspense";
 
@@ -418,7 +418,7 @@ export default function Dashboard() {
   }, [onDrag, stopDragging, onTouchDrag]);
 
   return (
-    <>
+    <SWRConfig value={{ refreshInterval: 3000 }}>
       <Helmet>
         <title>任务中心 | Kunter Online</title>
       </Helmet>
@@ -434,13 +434,15 @@ export default function Dashboard() {
           <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
         </div>
       </Snackbar>
-      <SearchModal
-        open={searchModalOpen}
-        setOpen={setSearchModalOpen}
-        setTaskId={setTaskId}
-        setUserTaskId={setUserTaskId}
-        setTaskDetailModalOpen={setTaskDetailModalOpen}
-      />
+      <SWRConfig value={{ refreshInterval: 0 }}>
+        <SearchModal
+          open={searchModalOpen}
+          setOpen={setSearchModalOpen}
+          setTaskId={setTaskId}
+          setUserTaskId={setUserTaskId}
+          setTaskDetailModalOpen={setTaskDetailModalOpen}
+        />
+      </SWRConfig>
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
       {!!taskDetailModalOpen && (
         <TaskDetailModal
@@ -708,6 +710,6 @@ export default function Dashboard() {
           </Box>
         </Sheet>
       </Box>
-    </>
+    </SWRConfig>
   );
 }

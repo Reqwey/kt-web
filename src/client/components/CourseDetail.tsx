@@ -28,7 +28,7 @@ import CourseChapter from "./CourseChapter";
 import CourseModulesDrawer from "./CourseModulesDrawer";
 import { CourseDetailData, Course } from "../models/course";
 import MySuspense from "./MySuspense";
-import useSWR from "swr";
+import useSWR, { SWRConfig } from "swr";
 import { getData } from "../methods/fetch_data";
 import { Helmet } from "react-helmet";
 
@@ -103,8 +103,8 @@ export default function CourseDetail(props: CourseDetailProps) {
     setModulesDrawerOpen(true);
   }, []);
 
-  return (
-    <>
+  return ( 
+    <SWRConfig value={{ refreshInterval: 3000 }}>
       <Helmet>
         <title>{`${title} | Kunter Online`}</title>
       </Helmet>
@@ -322,6 +322,6 @@ export default function CourseDetail(props: CourseDetailProps) {
           </Grid>
         </Grid>
       </Box>
-    </>
+    </SWRConfig>
   );
 }
