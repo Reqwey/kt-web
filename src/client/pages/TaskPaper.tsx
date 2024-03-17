@@ -29,6 +29,10 @@ import {
   Switch,
   Button,
   Snackbar,
+  DialogActions,
+  Divider,
+  Modal,
+  ModalDialog,
 } from "@mui/joy";
 import { Answer, AnswerData, PaperData, PaperTree } from "../models/paper";
 import { AttachmentList } from "../components/CourseModulesDrawer";
@@ -36,6 +40,55 @@ import { useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
 import useSWR, { SWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
+
+interface ConfirmModalProps {
+  open: boolean;
+  setOpen: (value: boolean) => void;
+  handleSubmit: () => void;
+}
+
+const ConfirmModal: React.FC<ConfirmModalProps> = ({
+  open,
+  setOpen,
+  handleSubmit,
+}) => {
+  return (
+    <Modal open={open} onClose={() => setOpen(false)}>
+      <ModalDialog
+        variant="outlined"
+        role="alertdialog"
+        sx={{ borderRadius: "lg" }}
+      >
+        <DialogTitle>
+          <WarningRounded />
+          请注意
+        </DialogTitle>
+        <Divider />
+        <DialogContent>您还有未完成的题目，确认提交吗？</DialogContent>
+        <DialogActions>
+          <Button
+            variant="solid"
+            color="danger"
+            onClick={() => {
+              handleSubmit();
+              setOpen(false);
+            }}
+          >
+            确认
+          </Button>
+          <Button
+            autoFocus
+            variant="plain"
+            color="neutral"
+            onClick={() => setOpen(false)}
+          >
+            点错了
+          </Button>
+        </DialogActions>
+      </ModalDialog>
+    </Modal>
+  );
+};
 
 export function TaskPaper() {
   const { taskId, paperId } = useParams();
@@ -56,6 +109,7 @@ export function TaskPaper() {
   );
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   const timeRef = useRef(0);
 
@@ -171,6 +225,11 @@ export function TaskPaper() {
       >
         {snackbarMessage}
       </Snackbar>
+      <ConfirmModal
+        open={confirmModalOpen}
+        setOpen={setConfirmModalOpen}
+        handleSubmit={handleSubmit}
+      />
       <VideoPlayerModal
         open={videoOpen}
         setOpen={setVideoOpen}
@@ -283,7 +342,7 @@ export function TaskPaper() {
               direction="row"
               justifyContent="center"
               alignItems="center"
-              spacing={2}
+              spacing={3}
             >
               {data.questions && (
                 <Typography
@@ -292,7 +351,8 @@ export function TaskPaper() {
                   fontSize="lg"
                   sx={{ pl: 1 }}
                 >
-                  {answerData.answer.length} / {data.questions.length}
+                  {answerData.answer.length} /{" "}
+                  {flattenedQuestions.filter((x) => x.model !== 3).length}
                 </Typography>
               )}
               <Switch
@@ -320,8 +380,20 @@ export function TaskPaper() {
                 <FormatListBulletedRounded />
               </IconButton>
             </Stack>
-            <Button fullWidth onClick={handleSubmit} loading={isMutating}>
-              提交
+            <Button
+              fullWidth
+              size="lg"
+              onClick={() => {
+                if (
+                  answerData.answer.length ===
+                  flattenedQuestions.filter((x) => x.model !== 3).length
+                )
+                  handleSubmit();
+                else setConfirmModalOpen(true);
+              }}
+              loading={isMutating}
+            >
+              提交任务
             </Button>
           </Sheet>
         </Box>
