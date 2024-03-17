@@ -418,7 +418,7 @@ export default function Dashboard() {
   }, [onDrag, stopDragging, onTouchDrag]);
 
   return (
-    <SWRConfig value={{ refreshInterval: 3000 }}>
+    <>
       <Helmet>
         <title>任务中心 | Kunter Online</title>
       </Helmet>
@@ -710,6 +710,6 @@ export default function Dashboard() {
           </Box>
         </Sheet>
       </Box>
-    </SWRConfig>
+    </>
   );
 }

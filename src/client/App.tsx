@@ -23,11 +23,29 @@ export default function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/paper/:paperId" element={<TaskPaper />} />
+            <Route
+              path="/dashboard"
+              element={
+                <SWRConfig value={{ refreshInterval: 3000 }}>
+                  <Dashboard />
+                </SWRConfig>
+              }
+            />
+            <Route
+              path="/paper/:paperId"
+              element={
+                <SWRConfig value={{ refreshInterval: 0 }}>
+                  <TaskPaper />
+                </SWRConfig>
+              }
+            />
             <Route
               path="/task/:taskId/paper/:paperId"
-              element={<TaskPaper />}
+              element={
+                <SWRConfig value={{ refreshInterval: 0 }}>
+                  <TaskPaper />
+                </SWRConfig>
+              }
             />
             <Route path="/courses" element={<Courses />} />
             <Route path="*" element={<NotFound />} />

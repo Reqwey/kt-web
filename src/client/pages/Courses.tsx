@@ -1,6 +1,7 @@
 import CourseList from "../components/CourseList";
 import CourseDetail from "../components/CourseDetail";
 import { useState } from "react";
+import { SWRConfig } from "swr";
 
 export default function Courses() {
   const [courseId, setCourseId] = useState("");
@@ -9,14 +10,16 @@ export default function Courses() {
     null
   );
   return courseId && courseTitle ? (
-    <CourseDetail
-      id={courseId}
-      title={courseTitle}
-      cover={courseCover}
-      setCourseId={setCourseId}
-      setCourseTitle={setCourseTitle}
-      setCourseCover={setCourseCover}
-    />
+    <SWRConfig value={{ refreshInterval: 3000 }}>
+      <CourseDetail
+        id={courseId}
+        title={courseTitle}
+        cover={courseCover}
+        setCourseId={setCourseId}
+        setCourseTitle={setCourseTitle}
+        setCourseCover={setCourseCover}
+      />
+    </SWRConfig>
   ) : (
     <CourseList
       setCourseId={setCourseId}

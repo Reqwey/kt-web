@@ -104,7 +104,7 @@ export default function CourseDetail(props: CourseDetailProps) {
   }, []);
 
   return ( 
-    <SWRConfig value={{ refreshInterval: 3000 }}>
+    <>
       <Helmet>
         <title>{`${title} | Kunter Online`}</title>
       </Helmet>
@@ -322,6 +322,6 @@ export default function CourseDetail(props: CourseDetailProps) {
           </Grid>
         </Grid>
       </Box>
-    </SWRConfig>
+    </>
   );
 }

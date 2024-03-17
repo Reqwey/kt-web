@@ -203,7 +203,7 @@ export function TaskPaper() {
   }, [answerData, flattenedQuestions]);
 
   return (
-    <SWRConfig value={{ refreshInterval: 0 }}>
+    <>
       <Helmet>
         <title>
           {`${
@@ -398,6 +398,6 @@ export function TaskPaper() {
           </Sheet>
         </Box>
       )}
-    </SWRConfig>
+    </>
   );
 }
