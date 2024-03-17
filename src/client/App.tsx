@@ -12,13 +12,13 @@ import { ErrorBoundary } from "react-error-boundary";
 import "./App.css";
 import { TaskPaper } from "./pages/TaskPaper";
 import { SWRConfig } from "swr";
+import { NotFound } from "./pages/NotFound";
+import { Fallback } from "./pages/Fallback";
 
 export default function App() {
   return (
-    <ErrorBoundary
-      fallback={<Typography>Something went wrong. Try to reload.</Typography>}
-    >
-      <SWRConfig value={{ refreshInterval: 2000 }}>
+    <ErrorBoundary FallbackComponent={Fallback}>
+      <SWRConfig value={{ refreshInterval: 3000 }}>
         <JoyCssVarsProvider disableTransitionOnChange theme={customTheme}>
           <CssBaseline />
           <Router>
@@ -26,7 +26,9 @@ export default function App() {
               <Route path="/" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/paper/:paperId" element={<TaskPaper />} />
+              <Route path="/task/:taskId/paper/:paperId" element={<TaskPaper />} />
               <Route path="/courses" element={<Courses />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Router>
         </JoyCssVarsProvider>

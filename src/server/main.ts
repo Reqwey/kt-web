@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import { createServer } from "https";
 import { readFileSync } from "fs";
+import { URLSearchParams } from "url";
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ const useHeaders: RequestHandler = (req, res, next) => {
 
   fetcher.interceptors.request.use(
     (config) => {
-      config.method
+      config.method;
       config.headers["User-Agent"] =
         "saturn/2.3.0 (Android 7.0/LingChuang) 2.3.0-base";
       config.headers["Content-Type"] = "application/json";
@@ -266,6 +267,26 @@ app.post("/api-mark-finish", useHeaders, async (req, res) => {
     if (!req.fetcher) throw new Error("Fetcher is undefined");
     const response = await req.fetcher.post(
       `https://api.fuulea.com/v2/tasks/${taskId}/detail/${detailId}/mark-finish/`
+    );
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.log(error);
+    res.json({});
+  }
+});
+
+app.post("/api-check-paper", useHeaders, async (req, res) => {
+  const { taskId, paperId } = req.body;
+
+  try {
+    if (!req.fetcher) throw new Error("Fetcher is undefined");
+    let searchParams;
+    if (taskId) searchParams = `scene=0&taskId=${taskId}`;
+    else searchParams = `scene=1&type=`;
+    const response = await req.fetcher.post(
+      `https://api.fuulea.com/v2/papers/${paperId}/check/?${searchParams}`,
+      { ...req.body }
     );
 
     res.json(response.data);

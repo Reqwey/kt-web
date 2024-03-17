@@ -8,19 +8,52 @@ import Typography from "@mui/joy/Typography";
 import ListItemDecorator from "@mui/joy/ListItemDecorator";
 
 import AddLocationAltTwoToneIcon from "@mui/icons-material/AddLocationAltTwoTone";
-import { AspectRatio, Box, Card, CardCover, Link } from "@mui/joy";
+import {
+  Alert,
+  AspectRatio,
+  Box,
+  Card,
+  CardContent,
+  CardCover,
+  Input,
+  Link,
+  ListItemButton,
+} from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
-import { ProblemTree } from "../models/paper";
+import { Answer, ProblemTree } from "../models/paper";
+import useDebouncedCallback from "../methods/use_debounce_callback";
 
 interface RenderProblemProps {
   questions: ProblemTree[];
-  showAnswer: boolean;
+  showProper: boolean;
+  answers: Answer[];
+  handleAnswerChange: (
+    id: number,
+    no: string,
+    answer: string,
+    isMultiSelect: boolean
+  ) => void;
   setVideoUrl: (url: string) => void;
   setVideoOpen: (open: boolean) => void;
 }
 
-const RenderProblem = React.memo<RenderProblemProps>((props) => {
-  const { questions, showAnswer, setVideoOpen, setVideoUrl } = props;
+const RenderProblem: React.FC<RenderProblemProps> = (props) => {
+  const {
+    questions,
+    showProper,
+    answers,
+    handleAnswerChange,
+    setVideoOpen,
+    setVideoUrl,
+  } = props;
+
+  const handleInputChange = useDebouncedCallback(
+    (event: React.ChangeEvent<HTMLInputElement>, item: ProblemTree) => {
+      handleAnswerChange(item.id, item.no as string, event.target.value, false);
+    },
+    500
+  );
+
   return (
     <List>
       {questions.map((item) => (
@@ -89,26 +122,54 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
               }}
               dangerouslySetInnerHTML={{ __html: item.content }}
             ></div>
-            {item.model <= 1 &&
-              item.answers &&
-              item.answers.filter((x) => x.content).length > 0 && (
-                <List sx={{ width: "100%" }}>
-                  {item.answers.map((choice) => (
-                    <ListItem
-                      key={`${item.no}-${choice.answer}`}
-                      variant={
-                        showAnswer &&
-                        (item.proper || ":").split(":").includes(choice.answer)
-                          ? "soft"
-                          : "plain"
+            {item.model <= 1 && item.answers && (
+              <List
+                sx={{
+                  width: "100%",
+                }}
+              >
+                {item.answers.map((choice) => (
+                  <ListItem
+                    key={`${item.no}-${choice.answer}`}
+                    sx={{ py: 0.25 }}
+                  >
+                    <ListItemButton
+                      selected={
+                        showProper
+                          ? (item.proper || ":")
+                              .split(":")
+                              .includes(choice.answer)
+                          : !!answers.filter(
+                              (x) =>
+                                x.id === item.id &&
+                                x.answer.split(":").includes(choice.answer)
+                            ).length
                       }
                       color={
-                        showAnswer &&
-                        (item.proper || ":").split(":").includes(choice.answer)
-                          ? "success"
-                          : "neutral"
+                        showProper
+                          ? (item.proper || ":")
+                              .split(":")
+                              .includes(choice.answer)
+                            ? "success"
+                            : undefined
+                          : answers.filter(
+                              (x) =>
+                                x.id === item.id &&
+                                x.answer.split(":").includes(choice.answer)
+                            ).length
+                          ? "primary"
+                          : undefined
                       }
-                      sx={{ borderRadius: "md" }}
+                      onClick={() => {
+                        if (!showProper)
+                          handleAnswerChange(
+                            item.id,
+                            item.no as string,
+                            choice.answer,
+                            item.model === 1
+                          );
+                      }}
+                      sx={{ py: 0, my: 0, borderRadius: "sm" }}
                     >
                       <ListItemDecorator>{choice.answer}</ListItemDecorator>
                       <ListItemContent>
@@ -122,60 +183,55 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
                           dangerouslySetInnerHTML={{ __html: choice.content }}
                         ></div>
                       </ListItemContent>
-                    </ListItem>
-                  ))}
-                </List>
-              )}
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
             {item.model === 3 && item.children && (
               <RenderProblem
-                showAnswer={showAnswer}
+                showProper={showProper}
                 questions={item.children}
+                answers={answers}
+                handleAnswerChange={handleAnswerChange}
                 setVideoOpen={setVideoOpen}
                 setVideoUrl={setVideoUrl}
               />
             )}
-            {showAnswer && (
-              <Typography
-                variant="soft"
-                color="success"
-                sx={{
-                  "--Typography-gap": "0.5rem",
-                  p: 1,
-                  m: 0.2,
-                  borderRadius: "md",
-                }}
-              >
-                <Chip variant="solid" size="sm" color="success">
+            {item.model === 2 &&
+              (item.subModel === 2 ? (
+                <Input onChange={(event) => handleInputChange(event, item)} />
+              ) : (
+                <Alert>暂不支持提交。</Alert>
+              ))}
+            {showProper && item.model !== 3 && (
+              <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
+                <Chip variant="solid" size="sm" color="primary">
                   答案
                 </Chip>
-                <br />
-                {item.model <= 1 && item.proper}
-                {item.noChoiceAnswer && (
-                  <div
-                    className="KtContent"
-                    style={{
-                      width: "100%",
-                      wordBreak: "break-all",
-                      overflowWrap: "break-word",
-                    }}
-                    dangerouslySetInnerHTML={{
-                      __html: item.noChoiceAnswer || "",
-                    }}
-                  ></div>
-                )}
-              </Typography>
+                <CardContent>
+                  {item.model <= 1 && item.proper}
+                  {item.noChoiceAnswer && (
+                    <div
+                      className="KtContent"
+                      style={{
+                        width: "100%",
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: item.noChoiceAnswer || "",
+                      }}
+                    ></div>
+                  )}
+                </CardContent>
+              </Card>
             )}
-            {showAnswer && item.analysis && (
-              <Typography
+            {showProper && item.analysis && (
+              <Card
                 variant="soft"
-                color="success"
                 className="KtContent"
-                sx={{
-                  "--Typography-gap": "0.5rem",
-                  p: 1,
-                  m: 0.2,
-                  borderRadius: "md",
-                }}
+                sx={{ borderRadius: "md" }}
               >
                 <Chip variant="solid" size="sm" color="success">
                   解析
@@ -188,9 +244,9 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
                   }}
                   dangerouslySetInnerHTML={{ __html: item.analysis || "" }}
                 ></div>
-              </Typography>
+              </Card>
             )}
-            {showAnswer && item.hasVideo && item.video && (
+            {showProper && item.hasVideo && item.video && (
               <Card
                 sx={{
                   width: "min(300px, 100%)",
@@ -270,6 +326,6 @@ const RenderProblem = React.memo<RenderProblemProps>((props) => {
       ))}
     </List>
   );
-});
+};
 
 export default RenderProblem;

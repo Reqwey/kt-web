@@ -12,6 +12,7 @@ export interface ProblemTree {
   children: ProblemTree[];
   model: number;
   modelName: string;
+  subModel: number | null;
   score: number;
   source?: string;
   content: string;
@@ -22,6 +23,10 @@ export interface ProblemTree {
   hasVideo: boolean;
   video?: string;
   cover?: string;
+  judgeProper: {
+    content: string[];
+    userId: string;
+  }
 }
 
 export interface PaperData {
@@ -31,4 +36,18 @@ export interface PaperData {
   questions: ProblemTree[];
   attachments: CourseAttachment[];
   nonParentPaperQuestions: number[];
+}
+
+export interface Answer {
+  id: number;
+  no: string;
+  answer: string;
+}
+
+export interface AnswerData {
+  client_time: string;
+  duration: number;
+  answer: Answer[];
+  photo: null;
+  vocabularySchedule: null;
 }

@@ -325,9 +325,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                               <Button
                                 component="a"
                                 variant="soft"
-                                href={`/paper/${
-                                  (detailInfo as TaskDetail).paperId
-                                }`}
+                                href={`/task/${
+                                  (detailInfo as TaskDetail).task.id
+                                }/paper/${(detailInfo as TaskDetail).paperId}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 endDecorator={<ArrowForward />}
