@@ -51,7 +51,8 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
     (event: React.ChangeEvent<HTMLInputElement>, item: PaperTree) => {
       handleAnswerChange(item.id, item.no as string, event.target.value, false);
     },
-    500
+    500,
+    [handleAnswerChange]
   );
 
   return (

@@ -86,6 +86,7 @@ export function TaskPaper() {
   const handleAnswerChange = useCallback(
     (id: number, no: string, answer: string, isMultiSelect: boolean) => {
       let newAnswer: Answer = { id, no, answer };
+      console.log(newAnswer, answerData);
       if (isMultiSelect) {
         const previousAnswer = answerData.answer.filter((x) => x.id === id)[0];
         if (previousAnswer) {
