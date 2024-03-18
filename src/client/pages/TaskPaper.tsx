@@ -163,18 +163,31 @@ export function TaskPaper() {
 
   const handleSubmit = useCallback(async () => {
     try {
-      let allAnswer = flattenedQuestions
-        .filter((x) => x.model !== 3)
-        .map((x) => {
+      let allAnswer = (data as PaperData).questions.map((x) => {
+        const tmp = { id: x.id, no: x.no || "--" };
+        if (x.children && x.children.length) {
           return {
-            id: x.id,
-            no: x.no,
-            answer: answerData.answer
-              .filter((y) => y.id === x.id)
-              .map((z) => z.answer)[0],
+            ...tmp,
+            children: x.children.map((y) => {
+              return {
+                id: y.id,
+                no: y.no,
+                answer: answerData.answer
+                  .filter((z) => z.id === y.id)
+                  .map((u) => u.answer)[0],
+              };
+            }),
           };
-        });
-      console.log(allAnswer);
+        } else {
+          return {
+            ...tmp,
+            answer:
+              answerData.answer
+                .filter((z) => z.id === x.id)
+                .map((u) => u.answer)[0] || "",
+          };
+        }
+      });
       const response = await trigger({
         taskId,
         paperId,
