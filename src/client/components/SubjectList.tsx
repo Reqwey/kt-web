@@ -30,12 +30,14 @@ const getCountsData = (url: string) =>
 const SubjectList: React.FC<SubjectListProps> = (props) => {
   const { subjectId, setSubjectId } = props;
 
-  let totalCount = 0, counts: SubjectListData;
+  let totalCount = 0,
+    counts: SubjectListData;
   const subjectList = JSON.parse(localStorage.getItem("subjectList") as string);
 
   const fromSWR: SubjectListData = useSWR(
     "/api-unfinished-counts",
-    getCountsData
+    getCountsData,
+    { refreshInterval: 3000 }
   ).data;
 
   if (fromSWR && fromSWR.success) {

@@ -1,19 +1,17 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { CssVarsProvider as JoyCssVarsProvider } from "@mui/joy/styles";
-import { CssBaseline, Typography } from "@mui/joy";
+import { CssBaseline } from "@mui/joy";
 
 import customTheme from "./theme";
 
+import { ErrorBoundary } from "react-error-boundary";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
-import { ErrorBoundary } from "react-error-boundary";
-
-import "./App.css";
-import { TaskPaper } from "./pages/TaskPaper";
-import { SWRConfig } from "swr";
-import { NotFound } from "./pages/NotFound";
-import { Fallback } from "./pages/Fallback";
+import TaskPaper from "./pages/TaskPaper";
+import NotFound from "./pages/NotFound";
+import Fallback from "./pages/Fallback";
+import TaskResult from "./pages/TaskResult";
 
 export default function App() {
   return (
@@ -23,30 +21,13 @@ export default function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route
-              path="/dashboard"
-              element={
-                <SWRConfig value={{ refreshInterval: 3000 }}>
-                  <Dashboard />
-                </SWRConfig>
-              }
-            />
-            <Route
-              path="/paper/:paperId"
-              element={
-                <SWRConfig value={{ refreshInterval: 0 }}>
-                  <TaskPaper />
-                </SWRConfig>
-              }
-            />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/paper/:paperId" element={<TaskPaper />} />
             <Route
               path="/task/:taskId/paper/:paperId"
-              element={
-                <SWRConfig value={{ refreshInterval: 0 }}>
-                  <TaskPaper />
-                </SWRConfig>
-              }
+              element={<TaskPaper />}
             />
+            <Route path="/exercise/:exerciseId" element={<TaskResult />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

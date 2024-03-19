@@ -34,11 +34,11 @@ import {
   Modal,
   ModalDialog,
 } from "@mui/joy";
-import { Answer, AnswerData, PaperData, PaperTree } from "../models/paper";
+import { AnswerMap, PaperData, PaperTree } from "../models/paper";
 import { AttachmentList } from "../components/CourseModulesDrawer";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
-import useSWR, { SWRConfig } from "swr";
+import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 
 interface ConfirmModalProps {
@@ -90,20 +90,22 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-export function TaskPaper() {
+export default function TaskPaper() {
   const { taskId, paperId } = useParams();
+  const navigate = useNavigate();
+  const [questions, setQuestions] = useState<PaperTree[]>([]);
   const [flattenedQuestions, setFlattenedQuestions] = useState<PaperTree[]>([]);
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProper, setShowProper] = useState(false);
-  const [answerData, setAnswerData] = useState<AnswerData>({
-    client_time: new Date().toISOString(),
-    duration: 0,
-    answer: [],
-    photo: null,
-    vocabularySchedule: null,
-  });
+  const [answerCount, setAnswerCount] = useState(0);
+  // const [answerData, setAnswerData] = useState<AnswerData>({
+  //   client_time: new Date().toISOString(),
+  //   duration: 0,
+  //   answer: [],
+
+  // });
   const [snackbarColor, setSnackbarColor] = useState<"danger" | "success">(
     "danger"
   );
@@ -111,7 +113,8 @@ export function TaskPaper() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-  const timeRef = useRef(0);
+  const timeRef = useRef<Date>(new Date());
+  const answerMap = useRef<AnswerMap>(new Map<number, string>());
 
   const { data, error, isLoading } = useSWR(`/api-paper/${paperId}`, (url) =>
     getData(url, {
@@ -119,12 +122,13 @@ export function TaskPaper() {
         username: localStorage.getItem("userName"),
         sn: localStorage.getItem("sn"),
       },
-    })
+    }),
+    {revalidateOnFocus: false}
   );
 
   useEffect(() => {
     if (data) {
-      timeRef.current = new Date().getTime() / 1000;
+      setQuestions(data.questions);
       setFlattenedQuestions(
         (data as PaperData).questions
           .map((x) => {
@@ -137,33 +141,55 @@ export function TaskPaper() {
 
   const { trigger, isMutating } = useSWRMutation("/api-check-paper", postData);
 
-  const handleAnswerChange = useCallback(
-    (id: number, no: string, answer: string, isMultiSelect: boolean) => {
-      let newAnswer: Answer = { id, no, answer };
-      console.log(newAnswer, answerData);
+  const handleAnswerChange = (
+    id: number,
+    answer: string,
+    isMultiSelect: boolean
+  ) => {
+    setQuestions((prevQuestions) => {
+      let newAnswer = answer,
+        newQuestions = [...prevQuestions];
+
       if (isMultiSelect) {
-        const previousAnswer = answerData.answer.filter((x) => x.id === id)[0];
+        const previousAnswer = answerMap.current.get(id);
         if (previousAnswer) {
-          let answerArray = previousAnswer.answer.split(":");
+          let answerArray = previousAnswer.split(":");
           if (answerArray.includes(answer))
             answerArray = answerArray.filter((x) => x !== answer);
           else answerArray = [...answerArray, answer].sort();
-          newAnswer.answer = answerArray.join(":");
+          newAnswer = answerArray.join(":");
+        }
+        console.log(newAnswer);
+      }
+
+      if (newAnswer) answerMap.current.set(id, newAnswer);
+      else answerMap.current.delete(id);
+      setAnswerCount(answerMap.current.size);
+
+      loop: for (let q of newQuestions) {
+        if (q.id === id) {
+          q.userAnswer = newAnswer;
+          break loop;
+        } else if (q.children && q.children.length) {
+          for (let c of q.children) {
+            if (c.id === id) {
+              c.userAnswer = newAnswer;
+              break loop;
+            }
+          }
         }
       }
-      setAnswerData({
-        ...answerData,
-        answer: newAnswer.answer
-          ? [...answerData.answer.filter((x) => x.id !== id), newAnswer]
-          : answerData.answer.filter((x) => x.id !== id),
-      });
-    },
-    [answerData]
-  );
+
+      return newQuestions;
+    });
+  };
 
   const handleSubmit = useCallback(async () => {
     try {
-      let allAnswer = (data as PaperData).questions.map((x) => {
+      if (!questions || !taskId || !paperId)
+        throw new Error("请等待题面加载完毕");
+
+      let allAnswer = questions.map((x) => {
         const tmp = { id: x.id, no: x.no || "--" };
         if (x.children && x.children.length) {
           return {
@@ -172,35 +198,37 @@ export function TaskPaper() {
               return {
                 id: y.id,
                 no: y.no,
-                answer: answerData.answer
-                  .filter((z) => z.id === y.id)
-                  .map((u) => u.answer)[0],
+                answer: y.userAnswer,
               };
             }),
           };
         } else {
           return {
             ...tmp,
-            answer:
-              answerData.answer
-                .filter((z) => z.id === x.id)
-                .map((u) => u.answer)[0] || "",
+            answer: x.userAnswer,
           };
         }
       });
+
       const response = await trigger({
         taskId,
         paperId,
-        ...answerData,
         answer: allAnswer,
-        duration: new Date().getTime() / 1000 - timeRef.current,
+        client_time: timeRef.current?.toISOString(),
+        duration: (
+          (new Date().getTime() - timeRef.current?.getTime()) /
+          1000
+        ).toFixed(3),
+        photo: null,
+        vocabularySchedule: null,
         username: localStorage.getItem("userName"),
         sn: localStorage.getItem("sn"),
         token: localStorage.getItem("token"),
       });
       if (response.success) {
         setSnackbarColor("success");
-        setSnackbarMessage("提交成功！请在平板上查看并阅卷");
+        setSnackbarMessage("提交成功！正在跳转");
+        navigate(`/exercise/${response.id}?name=${data.name}`);
         setSnackbarOpen(true);
       } else {
         setSnackbarColor("danger");
@@ -213,15 +241,13 @@ export function TaskPaper() {
       setSnackbarMessage(err.message);
       setSnackbarOpen(true);
     }
-  }, [answerData, flattenedQuestions]);
+  }, [questions]);
 
   return (
     <>
       <Helmet>
         <title>
-          {`${
-            isLoading || !data.name ? "Loading..." : data.name
-          } | Kunter Online`}
+          {`${isLoading || !data ? "Loading..." : data.name} | Kunter Online`}
         </title>
       </Helmet>
       <LoadingModal loading={isLoading} />
@@ -258,7 +284,7 @@ export function TaskPaper() {
           <DialogTitle>题目大纲</DialogTitle>
           <DialogContent sx={{ p: 1 }}>
             <Alert variant="soft" color="primary" sx={{ p: 1 }}>
-              {data.apiSummary}
+              {!!data && data.apiSummary}
             </Alert>
             <List>
               {flattenedQuestions.map((question) => (
@@ -297,7 +323,7 @@ export function TaskPaper() {
           </DialogContent>
         </Drawer>
       )}
-      {!isLoading && (
+      {!isLoading && data && (
         <Box
           sx={{
             display: "flex",
@@ -328,11 +354,10 @@ export function TaskPaper() {
               <AttachmentList attachments={data.attachments} />
             </Box>
           )}
-          {data.questions && data.questions.length > 0 && (
+          {questions && questions.length > 0 && (
             <PaperProblem
               showProper={showProper}
-              questions={data.questions}
-              answers={answerData.answer}
+              questions={questions}
               handleAnswerChange={handleAnswerChange}
               setVideoOpen={setVideoOpen}
               setVideoUrl={setVideoUrl}
@@ -364,8 +389,9 @@ export function TaskPaper() {
                   fontSize="lg"
                   sx={{ pl: 1 }}
                 >
-                  {answerData.answer.length} /{" "}
-                  {flattenedQuestions.filter((x) => x.model !== 3).length}
+                  {`${answerCount} / ${
+                    flattenedQuestions.filter((x) => x.model !== 3).length
+                  }`}
                 </Typography>
               )}
               <Switch
@@ -398,7 +424,7 @@ export function TaskPaper() {
               size="lg"
               onClick={() => {
                 if (
-                  answerData.answer.length ===
+                  answerCount ===
                   flattenedQuestions.filter((x) => x.model !== 3).length
                 )
                   handleSubmit();

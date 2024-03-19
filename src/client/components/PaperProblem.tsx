@@ -21,15 +21,13 @@ import {
 } from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
 import { Answer, PaperTree } from "../models/paper.js";
-import useDebouncedCallback from "../methods/use_debounce_callback.js";
+import useDebouncedCallback from "../methods/use_debounced_callback.js";
 
 interface RenderProblemProps {
   questions: PaperTree[];
   showProper: boolean;
-  answers: Answer[];
   handleAnswerChange: (
     id: number,
-    no: string,
     answer: string,
     isMultiSelect: boolean
   ) => void;
@@ -41,7 +39,6 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
   const {
     questions,
     showProper,
-    answers,
     handleAnswerChange,
     setVideoOpen,
     setVideoUrl,
@@ -49,10 +46,10 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
 
   const handleInputChange = useDebouncedCallback(
     (event: React.ChangeEvent<HTMLInputElement>, item: PaperTree) => {
-      handleAnswerChange(item.id, item.no as string, event.target.value, false);
+      handleAnswerChange(item.id, event.target.value, false);
     },
     500,
-    [handleAnswerChange]
+    [handleAnswerChange, questions]
   );
 
   return (
@@ -140,11 +137,8 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                           ? (item.proper || ":")
                               .split(":")
                               .includes(choice.answer)
-                          : !!answers.filter(
-                              (x) =>
-                                x.id === item.id &&
-                                x.answer.split(":").includes(choice.answer)
-                            ).length
+                          : !!item.userAnswer &&
+                            item.userAnswer.split(":").includes(choice.answer)
                       }
                       color={
                         showProper
@@ -153,11 +147,8 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                               .includes(choice.answer)
                             ? "success"
                             : undefined
-                          : answers.filter(
-                              (x) =>
-                                x.id === item.id &&
-                                x.answer.split(":").includes(choice.answer)
-                            ).length
+                          : !!item.userAnswer &&
+                            item.userAnswer.split(":").includes(choice.answer)
                           ? "primary"
                           : undefined
                       }
@@ -165,7 +156,6 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                         if (!showProper)
                           handleAnswerChange(
                             item.id,
-                            item.no as string,
                             choice.answer,
                             item.model === 1
                           );
@@ -193,7 +183,6 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
               <PaperProblem
                 showProper={showProper}
                 questions={item.children}
-                answers={answers}
                 handleAnswerChange={handleAnswerChange}
                 setVideoOpen={setVideoOpen}
                 setVideoUrl={setVideoUrl}

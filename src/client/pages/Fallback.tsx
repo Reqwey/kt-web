@@ -2,7 +2,7 @@ import { CancelTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import { Button, Sheet, Typography } from "@mui/joy";
 import { FallbackProps } from "react-error-boundary";
 
-export function Fallback({ error, resetErrorBoundary }: FallbackProps) {
+export default function Fallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <Sheet
       variant="soft"

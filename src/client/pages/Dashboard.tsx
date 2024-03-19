@@ -41,7 +41,7 @@ import TaskDetailModal from "../components/TaskDetailModal";
 import SubjectList from "../components/SubjectList";
 
 import config from "../../../package.json";
-import useSWR, { SWRConfig } from "swr";
+import useSWR from "swr";
 import { getData } from "../methods/fetch_data";
 import MySuspense from "../components/MySuspense";
 
@@ -327,7 +327,8 @@ export default function Dashboard() {
           sn: localStorage.getItem("sn"),
           token: localStorage.getItem("token"),
         },
-      })
+      }),
+    { refreshInterval: 3000 }
   );
 
   useEffect(() => {
@@ -434,15 +435,13 @@ export default function Dashboard() {
           <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
         </div>
       </Snackbar>
-      <SWRConfig value={{ refreshInterval: 0 }}>
-        <SearchModal
-          open={searchModalOpen}
-          setOpen={setSearchModalOpen}
-          setTaskId={setTaskId}
-          setUserTaskId={setUserTaskId}
-          setTaskDetailModalOpen={setTaskDetailModalOpen}
-        />
-      </SWRConfig>
+      <SearchModal
+        open={searchModalOpen}
+        setOpen={setSearchModalOpen}
+        setTaskId={setTaskId}
+        setUserTaskId={setUserTaskId}
+        setTaskDetailModalOpen={setTaskDetailModalOpen}
+      />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
       {!!taskDetailModalOpen && (
         <TaskDetailModal

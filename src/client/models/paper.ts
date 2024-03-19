@@ -7,7 +7,6 @@ export interface Choice {
 
 export interface PaperTree {
   id: number;
-  paperQuestionId: number;
   no?: string;
   children: PaperTree[];
   model: number;
@@ -18,6 +17,7 @@ export interface PaperTree {
   content: string;
   answers?: Choice[];
   noChoiceAnswer?: string;
+  userAnswer: string | null;
   proper?: string;
   analysis?: string;
   hasVideo: boolean;
@@ -26,7 +26,7 @@ export interface PaperTree {
   judgeProper: {
     content: string[];
     userId: string;
-  }
+  };
 }
 
 export interface PaperData {
@@ -37,6 +37,8 @@ export interface PaperData {
   attachments: CourseAttachment[];
   nonParentPaperQuestions: number[];
 }
+
+export type AnswerMap = Map<number, string>;
 
 export interface Answer {
   id: number;

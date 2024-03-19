@@ -2,7 +2,7 @@ import { HomeTwoTone } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/joy";
 import { useNavigate } from "react-router-dom";
 
-export function NotFound() {
+export default function NotFound() {
   const navigate = useNavigate();
   return (
     <Box
