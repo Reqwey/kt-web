@@ -14,7 +14,6 @@ import {
   DialogContent,
   Drawer,
   ModalClose,
-  Skeleton,
 } from "@mui/joy";
 import {
   BookTwoTone,
@@ -28,7 +27,7 @@ import CourseChapter from "./CourseChapter";
 import CourseModulesDrawer from "./CourseModulesDrawer";
 import { CourseDetailData, Course } from "../models/course";
 import MySuspense from "./MySuspense";
-import useSWR, { SWRConfig } from "swr";
+import useSWR from "swr";
 import { getData } from "../methods/fetch_data";
 import { Helmet } from "react-helmet";
 

@@ -22,7 +22,7 @@ import {
   Grid,
   CardContent,
   Stack,
-  ModalOverflow,
+  DialogContent,
 } from "@mui/joy";
 import {
   PeopleOutline,
@@ -41,10 +41,10 @@ import useSWR from "swr";
 import { getData, postData } from "../methods/fetch_data";
 import MySuspense from "./MySuspense";
 import { TaskDetail, TaskInfoData } from "../models/task_info";
-import { AttachmentList } from "./CourseModulesDrawer";
-import VideoPlayerModal from "./VideoPlayerModal";
+import AttachmentList from "./AttachmentList";
 import { splitTime } from "../models/task_list";
 import useSWRMutation from "swr/mutation";
+import { useVideoPlayer } from "./VideoPlayerProvider";
 
 interface TaskDetailModalOptions {
   setOpen(value: boolean): void;
@@ -52,14 +52,27 @@ interface TaskDetailModalOptions {
   userTaskId: number;
 }
 
-const _getData = (url: string) =>
-  getData(url, {
+const getModalInfo = async (url: string) => {
+  const res: TaskInfoData = await getData(url, {
     params: {
       username: localStorage.getItem("userName"),
       sn: localStorage.getItem("sn"),
       token: localStorage.getItem("token"),
     },
   });
+  return res;
+};
+
+const getDetailInfo = async (url: string) => {
+  const res: TaskDetail = await getData(url, {
+    params: {
+      username: localStorage.getItem("userName"),
+      sn: localStorage.getItem("sn"),
+      token: localStorage.getItem("token"),
+    },
+  });
+  return res;
+};
 
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const { setOpen, taskId, userTaskId } = props;
@@ -74,7 +87,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
     data: modalInfo,
     isLoading: modalLoading,
     error: modalError,
-  } = useSWR(`/api-task-info/${taskId}?userTaskId=${userTaskId}`, _getData);
+  } = useSWR(`/api-task-info/${taskId}?userTaskId=${userTaskId}`, getModalInfo);
 
   const {
     data: detailInfo,
@@ -85,16 +98,16 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
     detail.index !== -1
       ? `/api-task-info/${taskId}?userTaskId=${userTaskId}&detailId=${detail.id}`
       : null,
-    _getData
+    getDetailInfo
   );
 
   const { trigger, isMutating } = useSWRMutation("/api-mark-finish", postData);
 
   useEffect(() => {
-    if (modalInfo && (modalInfo as TaskInfoData).taskModules)
+    if (modalInfo && modalInfo.taskModules)
       setDetail({
         index: 0,
-        id: (modalInfo as TaskInfoData).taskModules[0].userTaskDetailId,
+        id: modalInfo.taskModules[0].userTaskDetailId,
       });
   }, [modalInfo]);
 
@@ -104,9 +117,10 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
 
   const handleMarkfinish = useCallback(async () => {
     try {
+      if (!detailInfo) throw new Error("未能获取详细信息。");
       await trigger({
-        taskId: (detailInfo as TaskDetail).task.id,
-        detailId: (detailInfo as TaskDetail).taskDetailId,
+        taskId: detailInfo.task.id,
+        detailId: detailInfo.taskDetailId,
         username: localStorage.getItem("userName"),
         sn: localStorage.getItem("sn"),
         token: localStorage.getItem("token"),
@@ -119,16 +133,10 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
     }
   }, [detail, detailInfo]);
 
-  const [videoOpen, setVideoOpen] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
+  const setVideoUrl = useVideoPlayer();
 
   return (
     <>
-      <VideoPlayerModal
-        open={videoOpen}
-        setOpen={setVideoOpen}
-        videoUrl={videoUrl}
-      />
       <Modal open>
         <ModalDialog
           aria-labelledby="task-detail-modal-title"
@@ -155,7 +163,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               noWrap={true}
               startDecorator={!modalLoading && <InfoOutlined />}
               endDecorator={
-                !modalLoading && (
+                !modalLoading &&
+                modalInfo && (
                   <Chip
                     variant="soft"
                     color="primary"
@@ -169,9 +178,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               sx={{ marginTop: -1 }}
             >
               <Skeleton animation="wave" loading={modalLoading}>
-                {modalLoading
-                  ? "Lorem ipsum is placeholder text"
-                  : modalInfo.title}
+                {modalInfo
+                  ? modalInfo.title
+                  : "Lorem ipsum is placeholder text"}
               </Skeleton>
             </Typography>
             <Box
@@ -213,12 +222,12 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
             </Box>
           </Box>
           <Divider />
-          <Box width="100%" height="100%" overflow="auto">
+          <DialogContent>
             <MySuspense loading={modalLoading}>
               {!!modalInfo && (
                 <>
-                  {!!(modalInfo as TaskInfoData).taskModules &&
-                    (modalInfo as TaskInfoData).taskModules.length > 1 && (
+                  {!!modalInfo.taskModules &&
+                    modalInfo.taskModules.length > 1 && (
                       <Tabs
                         orientation="horizontal"
                         sx={{ width: "100%", mb: 1 }}
@@ -243,37 +252,36 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             },
                           }}
                         >
-                          {(modalInfo as TaskInfoData).taskModules.map(
-                            (module, index) => (
-                              <Tab
-                                disableIndicator
-                                key={module.userTaskDetailId}
-                                value={`${index}/${module.userTaskDetailId}`}
-                              >
-                                {module.title}
-                              </Tab>
-                            )
-                          )}
+                          {modalInfo.taskModules.map((module, index) => (
+                            <Tab
+                              disableIndicator
+                              key={module.userTaskDetailId}
+                              value={`${index}/${module.userTaskDetailId}`}
+                            >
+                              {module.title}
+                            </Tab>
+                          ))}
                         </TabList>
                       </Tabs>
                     )}
                   <MySuspense loading={detailLoading}>
                     {!!detailInfo && (
-                      <Box width="100%" position="relative">
-                        {!!(detailInfo as TaskDetail).paperId && (
-                          <Card color="primary" sx={{ boxShadow: "sm" }}>
+                      <Box width="100%">
+                        {!!detailInfo.paperId && (
+                          <Card
+                            color="primary"
+                            sx={{ boxShadow: "sm", width: "100%" }}
+                          >
                             <CardContent
                               orientation="horizontal"
                               sx={{ width: "100%" }}
                             >
                               <div>
                                 <Typography fontSize="lg" fontWeight="lg">
-                                  {(detailInfo as TaskDetail).title ||
-                                    (modalInfo as TaskInfoData).title}
+                                  {detailInfo.title || modalInfo.title}
                                 </Typography>
-                                {(modalInfo as TaskInfoData).taskModules[
-                                  detail.index
-                                ].finishAt ? (
+                                {modalInfo.taskModules[detail.index]
+                                  .finishAt ? (
                                   <Typography
                                     color="success"
                                     startDecorator={
@@ -282,9 +290,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                     level="body-xs"
                                   >
                                     {splitTime(
-                                      (modalInfo as TaskInfoData).taskModules[
-                                        detail.index
-                                      ].finishAt as string
+                                      modalInfo.taskModules[detail.index]
+                                        .finishAt as string
                                     )}
                                   </Typography>
                                 ) : (
@@ -299,23 +306,19 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                         />
                                       }
                                     >
-                                      {splitTime(
-                                        (detailInfo as TaskDetail).task.endAt
-                                      )}
+                                      {splitTime(detailInfo.task.endAt)}
                                     </Typography>
                                     <Chip
                                       variant="outlined"
                                       color={
-                                        (detailInfo as TaskDetail).task
-                                          .allowSubmitIfDelay
+                                        detailInfo.task.allowSubmitIfDelay
                                           ? "success"
                                           : "danger"
                                       }
                                       size="sm"
                                       sx={{ ml: 1 }}
                                     >
-                                      {(detailInfo as TaskDetail).task
-                                        .allowSubmitIfDelay
+                                      {detailInfo.task.allowSubmitIfDelay
                                         ? "允许晚交"
                                         : "不可晚交"}
                                     </Chip>
@@ -325,11 +328,17 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                               <Button
                                 component="a"
                                 variant="soft"
-                                href={`/task/${
-                                  (detailInfo as TaskDetail).task.id
-                                }/paper/${(detailInfo as TaskDetail).paperId}`}
+                                href={
+                                  modalInfo.taskModules[detail.index].exerciseId
+                                    ? `/exercise/${
+                                        modalInfo.taskModules[detail.index]
+                                          .exerciseId
+                                      }?name=${
+                                        detailInfo.title || modalInfo.title
+                                      }`
+                                    : `/task/${detailInfo.task.id}/paper/${detailInfo.paperId}`
+                                }
                                 target="_blank"
-                                rel="noreferrer"
                                 endDecorator={<ArrowForward />}
                                 sx={{
                                   ml: "auto",
@@ -342,12 +351,12 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             </CardContent>
                           </Card>
                         )}
-                        {!!(detailInfo as TaskDetail).attachments && (
+                        {!!detailInfo.attachments && (
                           <AttachmentList
                             attachments={detailInfo.attachments}
                           />
                         )}
-                        {!!(detailInfo as TaskDetail).content && (
+                        {!!detailInfo.content && (
                           <Box
                             className="KtContent"
                             width="100%"
@@ -358,14 +367,14 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             }}
                           ></Box>
                         )}
-                        {!!(detailInfo as TaskDetail).videos && (
+                        {!!detailInfo.videos && !!detailInfo.videos.length && (
                           <Grid
                             container
                             spacing={{ xs: 2, md: 3 }}
                             columns={{ xs: 2, sm: 4, md: 8 }}
-                            sx={{ flexGrow: 1 }}
+                            sx={{ flexGrow: 1, pb: 6 }}
                           >
-                            {(detailInfo as TaskDetail).videos.map((v) => (
+                            {detailInfo.videos.map((v) => (
                               <Grid xs={2} sm={4} md={4} key={v.id}>
                                 <Card
                                   sx={{
@@ -379,10 +388,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                     bgcolor: "initial",
                                     p: 0,
                                   }}
-                                  onClick={() => {
-                                    setVideoUrl(v.video);
-                                    setVideoOpen(true);
-                                  }}
+                                  onClick={() => setVideoUrl(v.video)}
                                 >
                                   <Box sx={{ position: "relative" }}>
                                     <AspectRatio ratio="3/2">
@@ -444,17 +450,14 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             ))}
                           </Grid>
                         )}
-                        {!(detailInfo as TaskDetail).paperId &&
-                          !(modalInfo as TaskInfoData).taskModules[detail.index]
-                            .finishAt &&
+                        {!detailInfo.paperId &&
+                          !modalInfo.taskModules[detail.index].finishAt &&
                           markFinishButtonShow && (
                             <Box
                               width="100%"
                               display="flex"
                               alignItems="center"
                               justifyContent="center"
-                              position="absolute"
-                              bottom={0}
                             >
                               <Button
                                 onClick={handleMarkfinish}
@@ -472,8 +475,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                 </>
               )}
             </MySuspense>
-          </Box>
+          </DialogContent>
           {!modalLoading &&
+            modalInfo &&
             modalInfo.unfinishedStudents &&
             modalInfo.unfinishedStudents.length > 0 && <Divider />}
           <Box sx={{ width: "100%", position: "relative" }}>
@@ -484,6 +488,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
               loading={modalLoading}
             >
               {!modalLoading &&
+                modalInfo &&
                 modalInfo.unfinishedStudents &&
                 modalInfo.unfinishedStudents.length > 0 && (
                   <Accordion>

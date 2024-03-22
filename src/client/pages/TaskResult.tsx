@@ -4,9 +4,16 @@ import PaperProblem from "../components/PaperProblem";
 import LoadingModal from "../components/LoadingModal";
 import VideoPlayerModal from "../components/VideoPlayerModal";
 import {
+  AddLocationAltTwoTone,
+  AdminPanelSettings,
+  CheckBox,
+  Done,
+  Edit,
   FormatListBulletedRounded,
   InfoRounded,
+  LinkOutlined,
   LinkRounded,
+  PlayArrowRounded,
   VisibilityOffRounded,
   VisibilityRounded,
   WarningRounded,
@@ -33,61 +40,36 @@ import {
   Divider,
   Modal,
   ModalDialog,
+  Grid,
+  Card,
+  ListItemButton,
+  ListItemDecorator,
+  ListItemContent,
+  AspectRatio,
+  CardContent,
+  CardCover,
+  Input,
 } from "@mui/joy";
 import { AnswerMap, PaperData, PaperTree } from "../models/paper";
-import { AttachmentList } from "../components/CourseModulesDrawer";
+import AttachmentList from "../components/AttachmentList";
 import { useLocation, useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
+import MySuspense from "../components/MySuspense";
+import { Exercise, Question, ResultData } from "../models/result";
+import { splitTime } from "../models/task_list";
+import { useVideoPlayer } from "../components/VideoPlayerProvider";
 
-interface ConfirmModalProps {
-  open: boolean;
-  setOpen: (value: boolean) => void;
-  handleSubmit: () => void;
-}
-
-const ConfirmModal: React.FC<ConfirmModalProps> = ({
-  open,
-  setOpen,
-  handleSubmit,
-}) => {
-  return (
-    <Modal open={open} onClose={() => setOpen(false)}>
-      <ModalDialog
-        variant="outlined"
-        role="alertdialog"
-        sx={{ borderRadius: "lg" }}
-      >
-        <DialogTitle>
-          <WarningRounded />
-          请注意
-        </DialogTitle>
-        <Divider />
-        <DialogContent>您还有未完成的题目，确认提交吗？</DialogContent>
-        <DialogActions>
-          <Button
-            variant="solid"
-            color="danger"
-            onClick={() => {
-              handleSubmit();
-              setOpen(false);
-            }}
-          >
-            确认
-          </Button>
-          <Button
-            autoFocus
-            variant="plain"
-            color="neutral"
-            onClick={() => setOpen(false)}
-          >
-            点错了
-          </Button>
-        </DialogActions>
-      </ModalDialog>
-    </Modal>
-  );
+const getTaskResult = async (url: string) => {
+  const res: ResultData = await getData(url, {
+    params: {
+      username: localStorage.getItem("userName"),
+      sn: localStorage.getItem("sn"),
+      token: localStorage.getItem("token"),
+    },
+  });
+  return res;
 };
 
 export default function TaskResult() {
@@ -98,19 +80,38 @@ export default function TaskResult() {
 
   const { data, isLoading, error } = useSWR(
     `/api-exercise/${exerciseId}`,
-    (url) =>
-      getData(url, {
-        params: {
-          username: localStorage.getItem("userName"),
-          sn: localStorage.getItem("sn"),
-          token: localStorage.getItem("token"),
-        },
-      })
+    getTaskResult,
+    { revalidateOnFocus: false }
   );
 
+  const [flattenedExercises, setFlattenedExercises] = useState<Exercise[]>();
+  const [selectedId, setSelectedId] = useState<number>();
+  const [exercise, setExercise] = useState<Exercise>();
+
+  const setVideoUrl = useVideoPlayer();
+
   useEffect(() => {
-    console.log(data);
+    if (data) {
+      console.log(data);
+      setFlattenedExercises(
+        data.exercises
+          .map((x) => (x.children && x.children.length ? [...x.children] : x))
+          .flat()
+      );
+    }
   }, [data]);
+
+  useEffect(() => {
+    if (flattenedExercises) {
+      setSelectedId(flattenedExercises[0].id);
+    }
+  }, [flattenedExercises]);
+
+  useEffect(() => {
+    if (selectedId && flattenedExercises) {
+      setExercise(flattenedExercises.filter((x) => x.id === selectedId)[0]);
+    }
+  }, [selectedId, flattenedExercises]);
 
   return (
     <>
@@ -119,7 +120,367 @@ export default function TaskResult() {
           {`${isLoading || !data ? "Loading..." : taskName} | Kunter Online`}
         </title>
       </Helmet>
-      <LoadingModal loading={isLoading} />
+      <Box
+        sx={{
+          overflow: "hidden",
+          width: "100dvw",
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <MySuspense loading={isLoading}>
+          <Grid
+            container
+            spacing={0}
+            sx={{
+              overflow: "hidden",
+              height: "100%",
+              width: "100%",
+              flexGrow: 1,
+              backgroundColor: "background.level1",
+            }}
+          >
+            <Grid xs={3} height="100%" sx={{ px: 2, overflow: "auto" }}>
+              <Typography level="title-lg" sx={{ my: 1.5 }}>
+                {taskName}
+              </Typography>
+              {data?.markAt && (
+                <Typography
+                  sx={{ mb: 1.5 }}
+                  level="body-xs"
+                  startDecorator={<Done />}
+                >
+                  批改时间: {splitTime(data.markAt)}
+                </Typography>
+              )}
+              {data && (
+                <Stack
+                  direction="row"
+                  width="100%"
+                  divider={<Divider orientation="vertical" />}
+                  spacing={2}
+                  justifyContent="center"
+                >
+                  <Box width="100%">
+                    <Typography level="body-xs">得分</Typography>
+                    <Typography fontSize="xl4" lineHeight={1}>
+                      {data.score}
+                    </Typography>
+                    <Typography level="body-xs">
+                      班级平均 {data.statis.avgScore}
+                    </Typography>
+                  </Box>
+                  <Box width="100%">
+                    <Typography level="body-xs">得分率</Typography>
+                    <Typography fontSize="xl4" lineHeight={1}>
+                      {data.correctPercent + "%"}
+                    </Typography>
+                    <Typography level="body-xs">
+                      班级平均 {data.statis.avgCorrectPercent}%
+                    </Typography>
+                  </Box>
+                </Stack>
+              )}
+              {flattenedExercises && (
+                <List>
+                  {flattenedExercises.map((item) => (
+                    <ListItem key={item.id} sx={{ my: 0.5 }}>
+                      <ListItemButton
+                        variant="outlined"
+                        color={
+                          ["neutral", "success", "danger", "danger"][
+                            item.result
+                          ] as any
+                        }
+                        selected={selectedId === item.id}
+                        onClick={() => setSelectedId(item.id)}
+                        sx={{ borderRadius: "sm" }}
+                      >
+                        <ListItemDecorator>
+                          {item.question.no}
+                        </ListItemDecorator>
+                        <ListItemContent>
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            width="100%"
+                            justifyContent="space-between"
+                          >
+                            <Box>{item.question.modelName}</Box>
+                            <Box>
+                              {item.answer
+                                ? item.answer
+                                : item.result === 0
+                                ? "未阅"
+                                : `${item.score}分`}
+                            </Box>
+                          </Stack>
+                        </ListItemContent>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Grid>
+            <Grid xs height="100%">
+              {data && exercise && (
+                <Sheet
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    overflow: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    p: 2,
+                  }}
+                  variant="plain"
+                >
+                  {exercise.question.parentId && (
+                    <Box
+                      className="KtContent"
+                      sx={{
+                        width: "100%",
+                        wordBreak: "break-all",
+                        overflowWrap: "break-word",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: data.exercises.filter(
+                          (x) => x.question.id === exercise.question.parentId
+                        )[0].question.content,
+                      }}
+                    />
+                  )}
+                  <Typography
+                    id={exercise.question.id.toString()}
+                    mb={2}
+                    component="h4"
+                  >
+                    {exercise.question.no + "."}
+                    <Chip
+                      variant="soft"
+                      color="primary"
+                      size="sm"
+                      sx={{ ml: 1 }}
+                    >
+                      {exercise.question.score + " 分"}
+                    </Chip>
+                    {exercise.question.source ? (
+                      <Typography
+                        sx={{ marginLeft: 1 }}
+                        color="neutral"
+                        startDecorator={
+                          <AddLocationAltTwoTone color="primary" />
+                        }
+                      >
+                        {exercise.question.source}
+                      </Typography>
+                    ) : (
+                      <></>
+                    )}
+                    <Chip
+                      variant="soft"
+                      color="primary"
+                      size="sm"
+                      sx={{ ml: 1 }}
+                    >
+                      {exercise.question.modelName}
+                    </Chip>
+                  </Typography>
+
+                  <Box
+                    className="KtContent"
+                    sx={{
+                      width: "100%",
+                      wordBreak: "break-all",
+                      overflowWrap: "break-word",
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: exercise.question.content,
+                    }}
+                  />
+                  {exercise.question.model <= 1 &&
+                    exercise.question.answers && (
+                      <List
+                        sx={{
+                          width: "100%",
+                        }}
+                      >
+                        {exercise.question.answers.map((choice) => (
+                          <ListItem
+                            key={`${exercise.question.no}-${choice.answer}`}
+                            sx={{ py: 0.25 }}
+                          >
+                            <ListItemButton
+                              selected={(exercise.question.proper || ":")
+                                .split(":")
+                                .includes(choice.answer)}
+                              color={
+                                (exercise.question.proper || ":")
+                                  .split(":")
+                                  .includes(choice.answer)
+                                  ? "success"
+                                  : undefined
+                              }
+                              sx={{ py: 0, my: 0, borderRadius: "sm" }}
+                            >
+                              <ListItemDecorator>
+                                {choice.answer}
+                              </ListItemDecorator>
+                              <ListItemContent>
+                                <Box
+                                  className="KtContent"
+                                  sx={{
+                                    width: "100%",
+                                    wordBreak: "break-all",
+                                    overflowWrap: "break-word",
+                                  }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: choice.content,
+                                  }}
+                                />
+                              </ListItemContent>
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    )}
+                  <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
+                    <Chip variant="solid" size="sm" color="primary">
+                      我的答案
+                    </Chip>
+                    <CardContent>
+                      {exercise.answer}
+                      {exercise.photos.map(
+                        (src, index) =>
+                          src !== "**" && <img key={index} src={src}></img>
+                      )}
+                    </CardContent>
+                  </Card>
+                  {exercise.question.model !== 3 && (
+                    <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
+                      <Chip variant="solid" size="sm" color="primary">
+                        答案
+                      </Chip>
+                      <CardContent>
+                        {exercise.question.model <= 1 &&
+                          exercise.question.proper}
+                        {exercise.question.noChoiceAnswer && (
+                          <Box
+                            className="KtContent"
+                            sx={{
+                              width: "100%",
+                              wordBreak: "break-all",
+                              overflowWrap: "break-word",
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: exercise.question.noChoiceAnswer || "",
+                            }}
+                          />
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                  {exercise.question.analysis && (
+                    <Card
+                      variant="soft"
+                      className="KtContent"
+                      sx={{ borderRadius: "md" }}
+                    >
+                      <Chip variant="solid" size="sm" color="success">
+                        解析
+                      </Chip>
+                      <Box
+                        className="KtContent"
+                        sx={{
+                          width: "100%",
+                          wordBreak: "break-all",
+                          overflowWrap: "break-word",
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: exercise.question.analysis || "",
+                        }}
+                      />
+                    </Card>
+                  )}
+                  {exercise.question.hasVideo && exercise.question.video && (
+                    <Card
+                      sx={{
+                        width: "min(300px, 100%)",
+                        height: "min-content",
+                        cursor: "pointer",
+                        "&:hover": {
+                          boxShadow: "md",
+                          borderColor: "neutral.outlinedHoverBorder",
+                        },
+                        bgcolor: "initial",
+                        p: 0,
+                      }}
+                      onClick={() => setVideoUrl(exercise.question.video)}
+                    >
+                      <Box sx={{ position: "relative" }}>
+                        <AspectRatio ratio="3/2">
+                          <figure>
+                            <img
+                              src={exercise.question.cover}
+                              srcSet={exercise.question.cover}
+                              loading="lazy"
+                              alt="视频解析"
+                            />
+                          </figure>
+                        </AspectRatio>
+                        <CardCover
+                          sx={{
+                            opacity: 1,
+                            transition: "0.1s ease-in",
+                            background:
+                              "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                          }}
+                        >
+                          <div>
+                            <Box
+                              sx={{
+                                p: 2,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <PlayArrowRounded
+                                sx={{
+                                  color: "#fff",
+                                  fontSize: "70px",
+                                  bgcolor: "rgba(0 0 0 / 0.2)",
+                                  borderRadius: "lg",
+                                }}
+                              />
+                            </Box>
+                          </div>
+                        </CardCover>
+                      </Box>
+                      <Typography
+                        level="body-lg"
+                        fontWeight="lg"
+                        sx={{
+                          p: 2,
+                          mt: -9,
+                          zIndex: 11,
+                          color: "#fff",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        视频解析
+                      </Typography>
+                    </Card>
+                  )}
+                </Sheet>
+              )}
+            </Grid>
+          </Grid>
+        </MySuspense>
+      </Box>
     </>
   );
 }

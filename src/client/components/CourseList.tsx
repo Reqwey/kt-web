@@ -132,7 +132,7 @@ export default function CourseList(props: CourseListProps) {
               />
             }
           >
-            Kunter | 码课课程中心
+            码课课程中心
           </Typography>
           <Button
             variant="plain"

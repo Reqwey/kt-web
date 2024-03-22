@@ -20,8 +20,9 @@ import {
   ListItemButton,
 } from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
-import { Answer, PaperTree } from "../models/paper.js";
+import { PaperTree } from "../models/paper.js";
 import useDebouncedCallback from "../methods/use_debounced_callback.js";
+import { useVideoPlayer } from "./VideoPlayerProvider.js";
 
 interface RenderProblemProps {
   questions: PaperTree[];
@@ -31,18 +32,12 @@ interface RenderProblemProps {
     answer: string,
     isMultiSelect: boolean
   ) => void;
-  setVideoUrl: (url: string) => void;
-  setVideoOpen: (open: boolean) => void;
 }
 
 const PaperProblem: React.FC<RenderProblemProps> = (props) => {
-  const {
-    questions,
-    showProper,
-    handleAnswerChange,
-    setVideoOpen,
-    setVideoUrl,
-  } = props;
+  const { questions, showProper, handleAnswerChange } = props;
+
+  const setVideoUrl = useVideoPlayer();
 
   const handleInputChange = useDebouncedCallback(
     (event: React.ChangeEvent<HTMLInputElement>, item: PaperTree) => {
@@ -184,8 +179,6 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                 showProper={showProper}
                 questions={item.children}
                 handleAnswerChange={handleAnswerChange}
-                setVideoOpen={setVideoOpen}
-                setVideoUrl={setVideoUrl}
               />
             )}
             {item.model === 2 &&
@@ -249,10 +242,7 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                   bgcolor: "initial",
                   p: 0,
                 }}
-                onClick={() => {
-                  item.video && setVideoUrl(item.video);
-                  setVideoOpen(true);
-                }}
+                onClick={() => setVideoUrl(item.video)}
               >
                 <Box sx={{ position: "relative" }}>
                   <AspectRatio ratio="3/2">

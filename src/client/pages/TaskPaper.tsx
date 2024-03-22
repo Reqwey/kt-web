@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import PaperProblem from "../components/PaperProblem";
 import LoadingModal from "../components/LoadingModal";
-import VideoPlayerModal from "../components/VideoPlayerModal";
 import {
   FormatListBulletedRounded,
   InfoRounded,
@@ -35,7 +34,7 @@ import {
   ModalDialog,
 } from "@mui/joy";
 import { AnswerMap, PaperData, PaperTree } from "../models/paper";
-import { AttachmentList } from "../components/CourseModulesDrawer";
+import AttachmentList from "../components/AttachmentList";
 import { useNavigate, useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
 import useSWR from "swr";
@@ -95,8 +94,6 @@ export default function TaskPaper() {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<PaperTree[]>([]);
   const [flattenedQuestions, setFlattenedQuestions] = useState<PaperTree[]>([]);
-  const [videoOpen, setVideoOpen] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProper, setShowProper] = useState(false);
   const [answerCount, setAnswerCount] = useState(0);
@@ -116,14 +113,16 @@ export default function TaskPaper() {
   const timeRef = useRef<Date>(new Date());
   const answerMap = useRef<AnswerMap>(new Map<number, string>());
 
-  const { data, error, isLoading } = useSWR(`/api-paper/${paperId}`, (url) =>
-    getData(url, {
-      params: {
-        username: localStorage.getItem("userName"),
-        sn: localStorage.getItem("sn"),
-      },
-    }),
-    {revalidateOnFocus: false}
+  const { data, error, isLoading } = useSWR(
+    `/api-paper/${paperId}`,
+    (url) =>
+      getData(url, {
+        params: {
+          username: localStorage.getItem("userName"),
+          sn: localStorage.getItem("sn"),
+        },
+      }),
+    { revalidateOnFocus: false }
   );
 
   useEffect(() => {
@@ -269,11 +268,6 @@ export default function TaskPaper() {
         setOpen={setConfirmModalOpen}
         handleSubmit={handleSubmit}
       />
-      <VideoPlayerModal
-        open={videoOpen}
-        setOpen={setVideoOpen}
-        videoUrl={videoUrl}
-      />
       {!isLoading && (
         <Drawer
           anchor="right"
@@ -359,8 +353,6 @@ export default function TaskPaper() {
               showProper={showProper}
               questions={questions}
               handleAnswerChange={handleAnswerChange}
-              setVideoOpen={setVideoOpen}
-              setVideoUrl={setVideoUrl}
             />
           )}
           <Sheet

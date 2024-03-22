@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DPlayer from "dplayer";
 import Hls from "hls.js";
 import { DialogContent, Modal, ModalDialog } from "@mui/joy";
@@ -42,26 +42,23 @@ const Player: React.FC<PlayerProps> = ({ videoUrl }) => {
 };
 
 interface VideoPlayerModalProps {
-  videoUrl: string;
-  open: boolean;
-  setOpen: (value: boolean) => void;
+  videoUrl: string | null;
+  setVideoUrl: any;
 }
 
 const VideoPlayerModal: React.FC<VideoPlayerModalProps> = (props) => {
-  const { open, setOpen, videoUrl } = props;
+  const { videoUrl, setVideoUrl } = props;
+
   return (
-    <Modal
-      open={open}
-      onClose={() => {
-        setOpen(false);
-      }}
-    >
-      <ModalDialog layout="center" size="lg">
-        <DialogContent>
-          <Player videoUrl={videoUrl} />
-        </DialogContent>
-      </ModalDialog>
-    </Modal>
+    !!videoUrl && (
+      <Modal open onClose={() => setVideoUrl(null)}>
+        <ModalDialog layout="center" size="lg">
+          <DialogContent>
+            <Player videoUrl={videoUrl} />
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+    )
   );
 };
 

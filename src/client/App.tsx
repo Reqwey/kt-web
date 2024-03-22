@@ -12,26 +12,29 @@ import TaskPaper from "./pages/TaskPaper";
 import NotFound from "./pages/NotFound";
 import Fallback from "./pages/Fallback";
 import TaskResult from "./pages/TaskResult";
+import { VideoPlayerProvider } from "./components/VideoPlayerProvider";
 
 export default function App() {
   return (
     <ErrorBoundary FallbackComponent={Fallback}>
       <JoyCssVarsProvider disableTransitionOnChange theme={customTheme}>
         <CssBaseline />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/paper/:paperId" element={<TaskPaper />} />
-            <Route
-              path="/task/:taskId/paper/:paperId"
-              element={<TaskPaper />}
-            />
-            <Route path="/exercise/:exerciseId" element={<TaskResult />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
+        <VideoPlayerProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/paper/:paperId" element={<TaskPaper />} />
+              <Route
+                path="/task/:taskId/paper/:paperId"
+                element={<TaskPaper />}
+              />
+              <Route path="/exercise/:exerciseId" element={<TaskResult />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </VideoPlayerProvider>
       </JoyCssVarsProvider>
     </ErrorBoundary>
   );
