@@ -1,45 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
-import PaperProblem from "../components/PaperProblem";
-import LoadingModal from "../components/LoadingModal";
-import VideoPlayerModal from "../components/VideoPlayerModal";
 import {
   AddLocationAltTwoTone,
-  AdminPanelSettings,
-  CheckBox,
   Done,
-  Edit,
-  FormatListBulletedRounded,
-  InfoRounded,
-  LinkOutlined,
-  LinkRounded,
   PlayArrowRounded,
-  VisibilityOffRounded,
-  VisibilityRounded,
-  WarningRounded,
 } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Chip,
-  DialogContent,
-  DialogTitle,
-  Drawer,
-  IconButton,
-  Link,
   List,
   ListItem,
-  ModalClose,
   Typography,
   Sheet,
   Stack,
-  Switch,
-  Button,
-  Snackbar,
-  DialogActions,
   Divider,
-  Modal,
-  ModalDialog,
   Grid,
   Card,
   ListItemButton,
@@ -48,16 +22,12 @@ import {
   AspectRatio,
   CardContent,
   CardCover,
-  Input,
 } from "@mui/joy";
-import { AnswerMap, PaperData, PaperTree } from "../models/paper";
-import AttachmentList from "../components/AttachmentList";
 import { useLocation, useParams } from "react-router-dom";
-import { getData, postData } from "../methods/fetch_data";
+import { getData } from "../methods/fetch_data";
 import useSWR from "swr";
-import useSWRMutation from "swr/mutation";
 import MySuspense from "../components/MySuspense";
-import { Exercise, Question, ResultData } from "../models/result";
+import { Exercise, ResultData } from "../models/result";
 import { splitTime } from "../models/task_list";
 import { useVideoPlayer } from "../components/VideoPlayerProvider";
 
@@ -92,7 +62,6 @@ export default function TaskResult() {
 
   useEffect(() => {
     if (data) {
-      console.log(data);
       setFlattenedExercises(
         data.exercises
           .map((x) => (x.children && x.children.length ? [...x.children] : x))
@@ -145,7 +114,7 @@ export default function TaskResult() {
               <Typography level="title-lg" sx={{ my: 1.5 }}>
                 {taskName}
               </Typography>
-              {data?.markAt && (
+              {data && data.markAt && (
                 <Typography
                   sx={{ mb: 1.5 }}
                   level="body-xs"
@@ -203,7 +172,6 @@ export default function TaskResult() {
                         <ListItemContent>
                           <Stack
                             direction="row"
-                            spacing={2}
                             width="100%"
                             justifyContent="space-between"
                           >
@@ -312,7 +280,11 @@ export default function TaskResult() {
                             sx={{ py: 0.25 }}
                           >
                             <ListItemButton
-                              selected={(exercise.question.proper || ":")
+                              selected={(
+                                exercise.question.proper +
+                                ":" +
+                                exercise.answer
+                              )
                                 .split(":")
                                 .includes(choice.answer)}
                               color={
@@ -320,6 +292,10 @@ export default function TaskResult() {
                                   .split(":")
                                   .includes(choice.answer)
                                   ? "success"
+                                  : (exercise.answer || ":")
+                                      .split(":")
+                                      .includes(choice.answer)
+                                  ? "danger"
                                   : undefined
                               }
                               sx={{ py: 0, my: 0, borderRadius: "sm" }}

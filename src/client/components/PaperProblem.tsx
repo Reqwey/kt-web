@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Chip from "@mui/joy/Chip";
 import Sheet from "@mui/joy/Sheet";
 import List from "@mui/joy/List";
@@ -20,181 +20,161 @@ import {
   ListItemButton,
 } from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
-import { PaperTree } from "../models/paper.js";
-import useDebouncedCallback from "../methods/use_debounced_callback.js";
-import { useVideoPlayer } from "./VideoPlayerProvider.js";
+import { PaperTree } from "../models/paper";
+import useConsumerCallback from "../methods/use_consumer_callback";
+import { useVideoPlayer } from "./VideoPlayerProvider";
+import { useAnswerChange } from "../contexts/AnswerChangeContext";
 
 interface RenderProblemProps {
-  questions: PaperTree[];
+  question: PaperTree;
   showProper: boolean;
-  handleAnswerChange: (
-    id: number,
-    answer: string,
-    isMultiSelect: boolean
-  ) => void;
 }
 
 const PaperProblem: React.FC<RenderProblemProps> = (props) => {
-  const { questions, showProper, handleAnswerChange } = props;
+  const { question, showProper } = props;
 
   const setVideoUrl = useVideoPlayer();
+  const answerChangeCallback = useAnswerChange();
 
-  const handleInputChange = useDebouncedCallback(
-    (event: React.ChangeEvent<HTMLInputElement>, item: PaperTree) => {
-      handleAnswerChange(item.id, event.target.value, false);
+  const handleAnswerChange = useConsumerCallback(
+    (id: number, value: any, isMultiSelect: boolean) => {
+      answerChangeCallback(id, value, isMultiSelect);
     },
-    500,
-    [handleAnswerChange, questions]
+    1000,
+    [answerChangeCallback, question]
   );
 
-  return (
-    <List>
-      {questions.map((item) => (
-        <ListItem
-          key={
-            item.no
-              ? item.no
-              : item.children[0].no +
-                "~" +
-                item.children[item.children.length - 1].no
-          }
-          sx={{
-            width: "100%",
-          }}
-        >
-          <Sheet
-            variant="plain"
-            sx={{ width: "100%", boxShadow: "sm", borderRadius: "md", p: 2 }}
-          >
-            <Typography
-              id={item.id.toString()}
-              mb={2}
-              component="h4"
-              endDecorator={
-                <Link
-                  variant="outlined"
-                  aria-labelledby={item.id.toString()}
-                  href={"#" + item.id}
-                  fontSize="md"
-                  borderRadius="sm"
-                >
-                  <LinkOutlined />
-                </Link>
-              }
-            >
-              {(item.no
-                ? item.no
-                : item.children[0].no +
-                  "~" +
-                  item.children[item.children.length - 1].no) + "."}
-              <Chip variant="soft" color="primary" size="sm" sx={{ ml: 1 }}>
-                {item.score + " 分"}
-              </Chip>
-              {item.source ? (
-                <Typography
-                  sx={{ marginLeft: 1 }}
-                  color="neutral"
-                  startDecorator={<AddLocationAltTwoToneIcon color="primary" />}
-                >
-                  {item.source}
-                </Typography>
-              ) : (
-                <></>
-              )}
-              <Chip variant="soft" color="primary" size="sm" sx={{ ml: 1 }}>
-                {item.modelName}
-              </Chip>
-            </Typography>
+  const [selectedChoice, setSelectedChoice] = useState(question.userAnswer || "");
 
-            <div
-              className="KtContent"
-              style={{
-                width: "100%",
-                wordBreak: "break-all",
-                overflowWrap: "break-word",
-              }}
-              dangerouslySetInnerHTML={{ __html: item.content }}
-            ></div>
-            {item.model <= 1 && item.answers && (
-              <List
-                sx={{
-                  width: "100%",
-                }}
+  return (
+    <ListItem
+      sx={{
+        width: "100%",
+        px: 0,
+      }}
+    >
+      <Sheet
+        variant="plain"
+        sx={{
+          width: "100%",
+          boxShadow: "sm",
+          borderRadius: "md",
+          p: 2,
+        }}
+      >
+        <Typography
+          id={question.id.toString()}
+          mb={2}
+          component="h4"
+          endDecorator={
+            <Link
+              variant="outlined"
+              aria-labelledby={question.id.toString()}
+              href={"#" + question.id}
+              fontSize="md"
+              borderRadius="sm"
+            >
+              <LinkOutlined />
+            </Link>
+          }
+        >
+          {(question.no
+            ? question.no
+            : question.children[0].no +
+              "~" +
+              question.children[question.children.length - 1].no) + "."}
+          <Chip variant="soft" color="primary" size="sm" sx={{ ml: 1 }}>
+            {question.score + " 分"}
+          </Chip>
+          {question.source ? (
+            <Typography
+              sx={{ marginLeft: 1 }}
+              color="neutral"
+              startDecorator={<AddLocationAltTwoToneIcon color="primary" />}
+            >
+              {question.source}
+            </Typography>
+          ) : (
+            <></>
+          )}
+          <Chip variant="soft" color="primary" size="sm" sx={{ ml: 1 }}>
+            {question.modelName}
+          </Chip>
+        </Typography>
+
+        <div
+          className="KtContent"
+          style={{
+            width: "100%",
+            wordBreak: "break-all",
+            overflowWrap: "break-word",
+          }}
+          dangerouslySetInnerHTML={{ __html: question.content }}
+        ></div>
+        {question.model <= 1 && question.answers && (
+          <List
+            sx={{
+              width: "100%",
+            }}
+          >
+            {question.answers.map((choice) => (
+              <ListItem
+                key={`${question.no}-${choice.answer}`}
+                sx={{ py: 0.25 }}
               >
-                {item.answers.map((choice) => (
-                  <ListItem
-                    key={`${item.no}-${choice.answer}`}
-                    sx={{ py: 0.25 }}
-                  >
-                    <ListItemButton
-                      selected={
-                        showProper
-                          ? (item.proper || ":")
-                              .split(":")
-                              .includes(choice.answer)
-                          : !!item.userAnswer &&
-                            item.userAnswer.split(":").includes(choice.answer)
-                      }
-                      color={
-                        showProper
-                          ? (item.proper || ":")
-                              .split(":")
-                              .includes(choice.answer)
-                            ? "success"
-                            : undefined
-                          : !!item.userAnswer &&
-                            item.userAnswer.split(":").includes(choice.answer)
-                          ? "primary"
-                          : undefined
-                      }
-                      onClick={() => {
-                        if (!showProper)
-                          handleAnswerChange(
-                            item.id,
-                            choice.answer,
-                            item.model === 1
-                          );
-                      }}
-                      sx={{ py: 0, my: 0, borderRadius: "sm" }}
-                    >
-                      <ListItemDecorator>{choice.answer}</ListItemDecorator>
-                      <ListItemContent>
-                        <div
-                          className="KtContent"
-                          style={{
-                            width: "100%",
-                            wordBreak: "break-all",
-                            overflowWrap: "break-word",
-                          }}
-                          dangerouslySetInnerHTML={{ __html: choice.content }}
-                        ></div>
-                      </ListItemContent>
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            )}
-            {item.model === 3 && item.children && (
-              <PaperProblem
-                showProper={showProper}
-                questions={item.children}
-                handleAnswerChange={handleAnswerChange}
-              />
-            )}
-            {item.model === 2 &&
-              (item.subModel === 2 ? (
-                <Input onChange={(event) => handleInputChange(event, item)} />
-              ) : (
-                <Alert>暂不支持提交。</Alert>
-              ))}
-            {showProper && item.model !== 3 && (
-              <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
-                <Chip variant="solid" size="sm" color="primary">
-                  答案
-                </Chip>
-                <CardContent>
-                  {item.model <= 1 && item.proper}
-                  {item.noChoiceAnswer && (
+                <ListItemButton
+                  selected={
+                    showProper
+                      ? (question.proper || ":")
+                          .split(":")
+                          .includes(choice.answer)
+                      : selectedChoice.split(":").includes(choice.answer)
+                  }
+                  color={
+                    showProper
+                      ? (question.proper || ":")
+                          .split(":")
+                          .includes(choice.answer)
+                        ? "success"
+                        : undefined
+                      : selectedChoice.split(":").includes(choice.answer)
+                      ? "primary"
+                      : undefined
+                  }
+                  onClick={() => {
+                    if (!showProper) {
+                      setSelectedChoice((prevChoice) => {
+                        let newChoice = choice.answer;
+
+                        if (question.model === 1 && prevChoice) {
+                          let answerArray = prevChoice.split(":");
+
+                          if (answerArray.includes(choice.answer))
+                            answerArray = answerArray.filter(
+                              (x) => x !== choice.answer
+                            );
+                          else
+                            answerArray = [
+                              ...answerArray,
+                              choice.answer,
+                            ].sort();
+
+                          newChoice = answerArray.join(":");
+                        }
+
+                        return newChoice;
+                      });
+                      handleAnswerChange(
+                        question.id,
+                        choice.answer,
+                        question.model === 1
+                      );
+                    }
+                  }}
+                  sx={{ py: 0, my: 0, borderRadius: "sm" }}
+                >
+                  <ListItemDecorator>{choice.answer}</ListItemDecorator>
+                  <ListItemContent>
                     <div
                       className="KtContent"
                       style={{
@@ -202,109 +182,149 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
                         wordBreak: "break-all",
                         overflowWrap: "break-word",
                       }}
-                      dangerouslySetInnerHTML={{
-                        __html: item.noChoiceAnswer || "",
-                      }}
+                      dangerouslySetInnerHTML={{ __html: choice.content }}
                     ></div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-            {showProper && item.analysis && (
-              <Card
-                variant="soft"
-                className="KtContent"
-                sx={{ borderRadius: "md" }}
-              >
-                <Chip variant="solid" size="sm" color="success">
-                  解析
-                </Chip>
+                  </ListItemContent>
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        )}
+        {question.model === 3 &&
+          !!question.children &&
+          !!question.children.length && (
+            <List>
+              {question.children.map((item) => (
+                <PaperProblem showProper={showProper} question={item} />
+              ))}
+            </List>
+          )}
+        {question.model === 2 &&
+          (question.subModel === 2 ? (
+            <Input
+              onChange={(event) =>
+                handleAnswerChange(question.id, event.target.value, false)
+              }
+            />
+          ) : (
+            <Alert>暂不支持提交。</Alert>
+          ))}
+        {showProper && question.model !== 3 && (
+          <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
+            <Chip variant="solid" size="sm" color="primary">
+              答案
+            </Chip>
+            <CardContent>
+              {question.model <= 1 && question.proper}
+              {question.noChoiceAnswer && (
                 <div
+                  className="KtContent"
                   style={{
                     width: "100%",
                     wordBreak: "break-all",
                     overflowWrap: "break-word",
                   }}
-                  dangerouslySetInnerHTML={{ __html: item.analysis || "" }}
+                  dangerouslySetInnerHTML={{
+                    __html: question.noChoiceAnswer || "",
+                  }}
                 ></div>
-              </Card>
-            )}
-            {showProper && item.hasVideo && item.video && (
-              <Card
+              )}
+            </CardContent>
+          </Card>
+        )}
+        {showProper && question.analysis && (
+          <Card
+            variant="soft"
+            className="KtContent"
+            sx={{ borderRadius: "md" }}
+          >
+            <Chip variant="solid" size="sm" color="success">
+              解析
+            </Chip>
+            <div
+              style={{
+                width: "100%",
+                wordBreak: "break-all",
+                overflowWrap: "break-word",
+              }}
+              dangerouslySetInnerHTML={{ __html: question.analysis || "" }}
+            ></div>
+          </Card>
+        )}
+        {showProper && question.hasVideo && question.video && (
+          <Card
+            sx={{
+              width: "min(300px, 100%)",
+              height: "min-content",
+              cursor: "pointer",
+              "&:hover": {
+                boxShadow: "md",
+                borderColor: "neutral.outlinedHoverBorder",
+              },
+              bgcolor: "initial",
+              p: 0,
+            }}
+            onClick={() => setVideoUrl(question.video)}
+          >
+            <Box sx={{ position: "relative" }}>
+              <AspectRatio ratio="3/2">
+                <figure>
+                  <img
+                    src={question.cover}
+                    srcSet={question.cover}
+                    loading="lazy"
+                    alt="视频解析"
+                  />
+                </figure>
+              </AspectRatio>
+              <CardCover
                 sx={{
-                  width: "min(300px, 100%)",
-                  height: "min-content",
-                  cursor: "pointer",
-                  "&:hover": {
-                    boxShadow: "md",
-                    borderColor: "neutral.outlinedHoverBorder",
-                  },
-                  bgcolor: "initial",
-                  p: 0,
+                  opacity: 1,
+                  transition: "0.1s ease-in",
+                  background:
+                    "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
                 }}
-                onClick={() => setVideoUrl(item.video)}
               >
-                <Box sx={{ position: "relative" }}>
-                  <AspectRatio ratio="3/2">
-                    <figure>
-                      <img
-                        src={item.cover}
-                        srcSet={item.cover}
-                        loading="lazy"
-                        alt="视频解析"
-                      />
-                    </figure>
-                  </AspectRatio>
-                  <CardCover
+                <div>
+                  <Box
                     sx={{
-                      opacity: 1,
-                      transition: "0.1s ease-in",
-                      background:
-                        "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                      p: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <div>
-                      <Box
-                        sx={{
-                          p: 2,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <PlayArrowRounded
-                          sx={{
-                            color: "#fff",
-                            fontSize: "70px",
-                            bgcolor: "rgba(0 0 0 / 0.2)",
-                            borderRadius: "lg",
-                          }}
-                        />
-                      </Box>
-                    </div>
-                  </CardCover>
-                </Box>
-                <Typography
-                  level="body-lg"
-                  fontWeight="lg"
-                  sx={{
-                    p: 2,
-                    mt: -9,
-                    zIndex: 11,
-                    color: "#fff",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  视频解析
-                </Typography>
-              </Card>
-            )}
-          </Sheet>
-        </ListItem>
-      ))}
-    </List>
+                    <PlayArrowRounded
+                      sx={{
+                        color: "#fff",
+                        fontSize: "70px",
+                        bgcolor: "rgba(0 0 0 / 0.2)",
+                        borderRadius: "lg",
+                      }}
+                    />
+                  </Box>
+                </div>
+              </CardCover>
+            </Box>
+            <Typography
+              level="body-lg"
+              fontWeight="lg"
+              sx={{
+                p: 2,
+                mt: -9,
+                zIndex: 11,
+                color: "#fff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              视频解析
+            </Typography>
+          </Card>
+        )}
+      </Sheet>
+    </ListItem>
   );
 };
 
