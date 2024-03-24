@@ -62,6 +62,7 @@ export default function TaskResult() {
 
   useEffect(() => {
     if (data) {
+      console.log(data);
       setFlattenedExercises(
         data.exercises
           .map((x) => (x.children && x.children.length ? [...x.children] : x))
@@ -71,7 +72,7 @@ export default function TaskResult() {
   }, [data]);
 
   useEffect(() => {
-    if (flattenedExercises) {
+    if (flattenedExercises && flattenedExercises.length) {
       setSelectedId(flattenedExercises[0].id);
     }
   }, [flattenedExercises]);
@@ -178,7 +179,7 @@ export default function TaskResult() {
                             <Box>{item.question.modelName}</Box>
                             <Box>
                               {item.answer
-                                ? item.answer
+                                ? item.answer.split(":").join("")
                                 : item.result === 0
                                 ? "未阅"
                                 : `${item.score}分`}

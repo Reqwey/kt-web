@@ -59,6 +59,11 @@ export interface CoursePaper {
   totalScore: number;
 }
 
+export interface CourseExercise {
+  exerciseId: number;
+  canMark: boolean;
+}
+
 export interface CourseAttachment {
   id: number;
   name: string;
@@ -76,6 +81,7 @@ export interface CourseModule {
   videos: CourseVideo[];
   attachments: CourseAttachment[];
   paper: CoursePaper | null;
+  exercise: CourseExercise | null;
   evolve: {
     finished: boolean;
     correctPercent: string | null;

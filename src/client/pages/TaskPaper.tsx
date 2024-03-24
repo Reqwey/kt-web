@@ -88,7 +88,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-function PreviewList(props: { questions: PaperTree[] }) {
+function PreviewList(props: { questions: PaperTree[], showProper: boolean }) {
   return (
     <List>
       {props.questions.map((question) => (
@@ -128,9 +128,19 @@ function PreviewList(props: { questions: PaperTree[] }) {
                       {question.userAnswer.split(":").join("")}
                     </Typography>
                   )}
+                  {props.showProper && question.proper && (
+                    <Typography
+                    variant="solid"
+                    color="success"
+                    level="body-sm"
+                    sx={{ borderRadius: "sm", px: 1 }}
+                  >
+                    {question.proper.split(":").join("")}
+                  </Typography>
+                  )}
                 </Stack>
                 {!!question.children && !!question.children.length && (
-                  <PreviewList questions={question.children} />
+                  <PreviewList questions={question.children} showProper={props.showProper} />
                 )}
               </Stack>
             </ListItemContent>
@@ -266,6 +276,7 @@ export default function TaskPaper() {
         token: localStorage.getItem("token"),
       });
       if (response.success) {
+        console.log(response);
         setSnackbarColor("success");
         if (response.id) {
           setSnackbarMessage("提交成功！正在跳转");
@@ -435,7 +446,7 @@ export default function TaskPaper() {
                   <Alert variant="soft" color="primary">
                     {data.apiSummary}
                   </Alert>
-                  <PreviewList questions={questions} />
+                  <PreviewList questions={questions} showProper={showProper} />
                 </Grid>
               </>
             )}

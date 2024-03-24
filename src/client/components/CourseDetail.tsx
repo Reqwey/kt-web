@@ -191,8 +191,9 @@ export default function CourseDetail(props: CourseDetailProps) {
               {selectedCourseRanges.map((item) => (
                 <ListItem key={item.id}>
                   <ListItemButton
-                    color={selectedCourseId === item.id ? "primary" : "neutral"}
-                    variant={selectedCourseId === item.id ? "soft" : "plain"}
+                    color="primary"
+                    variant="outlined"
+                    selected={selectedCourseId === item.id}
                     onClick={() => {
                       setSelectedCourseId(item.id);
                       setDrawerOpen(false);

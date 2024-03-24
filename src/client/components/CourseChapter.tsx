@@ -6,13 +6,21 @@ import {
   TreeView,
   treeItemClasses,
 } from "@mui/x-tree-view";
-import { ChevronRight, ExpandMore, MenuBook } from "@mui/icons-material";
+import {
+  ChevronRight,
+  DoneAllRounded,
+  ExpandMore,
+  GradeRounded,
+  LibraryBooksTwoTone,
+  MenuBook,
+} from "@mui/icons-material";
 import { styled } from "@mui/material";
 import {
   experimental_extendTheme as materialExtendTheme,
   Experimental_CssVarsProvider as MaterialCssVarsProvider,
   THEME_ID as MATERIAL_THEME_ID,
 } from "@mui/material/styles";
+import { Chip, Stack, Typography } from "@mui/joy";
 
 const materialTheme = materialExtendTheme();
 
@@ -22,9 +30,15 @@ interface CourseChapterProps {
 }
 
 interface RenderTree {
-  key: string;
+  key: number;
   title: string;
   isLeaf: boolean;
+  evolve?: {
+    finished: boolean;
+    avgCorrectPercent: null | number;
+  };
+  questionCount: number;
+  studiedCount: number;
   children: RenderTree[];
 }
 
@@ -55,12 +69,48 @@ const StyledTreeItem = styled(CustomTreeItem)(() => ({
 
 const CourseChapter = React.memo<CourseChapterProps>(
   ({ data, handleClick }) => {
+    console.log(data);
+
     const renderTree = (nodes: RenderTree[]) => {
       return nodes.map((node) => (
         <StyledTreeItem
           key={node.key}
-          nodeId={node.key}
-          label={node.title}
+          nodeId={node.key.toString()}
+          label={
+            <Typography
+              textColor="inherit"
+              endDecorator={
+                <Stack direction="row" spacing={1}>
+                  {!!node.questionCount && <Chip
+                    variant="outlined"
+                    color="primary"
+                    size="sm"
+                    startDecorator={<LibraryBooksTwoTone fontSize="small" />}
+                  >
+                    {node.questionCount} 课时
+                  </Chip>}
+                  {!!node.studiedCount && <Chip
+                    variant="outlined"
+                    color="warning"
+                    size="sm"
+                    startDecorator={<GradeRounded fontSize="small" />}
+                  >
+                    已学 {node.studiedCount} 课
+                  </Chip>}
+                  {node.evolve && !!node.evolve.avgCorrectPercent && (
+                    <Chip size="sm" color="success">
+                      平均得分 {node.evolve.avgCorrectPercent.toFixed(1)}
+                    </Chip>
+                  )}
+                  {node.evolve && node.evolve.finished && (
+                    <DoneAllRounded color="success" fontSize="small" />
+                  )}
+                </Stack>
+              }
+            >
+              {node.title}
+            </Typography>
+          }
           onClick={() => {
             node.isLeaf ? handleClick(node) : null;
           }}
