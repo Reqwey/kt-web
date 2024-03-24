@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Chip from "@mui/joy/Chip";
 import Sheet from "@mui/joy/Sheet";
 import List from "@mui/joy/List";
@@ -21,9 +21,8 @@ import {
 } from "@mui/joy";
 import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
 import { PaperTree } from "../models/paper";
-import useConsumerCallback from "../methods/use_consumer_callback";
 import { useVideoPlayer } from "./VideoPlayerProvider";
-import { useAnswerChange } from "../contexts/AnswerChangeContext";
+import { useAnswerChange, useAnswerMap } from "./AnswerProvider";
 
 interface RenderProblemProps {
   question: PaperTree;
@@ -34,17 +33,18 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
   const { question, showProper } = props;
 
   const setVideoUrl = useVideoPlayer();
+  const answerMap = useAnswerMap();
   const answerChangeCallback = useAnswerChange();
 
-  const handleAnswerChange = useConsumerCallback(
+  const handleAnswerChange = useCallback(
     (id: number, value: any, isMultiSelect: boolean) => {
       answerChangeCallback(id, value, isMultiSelect);
     },
-    1000,
-    [answerChangeCallback, question]
+    [answerChangeCallback]
   );
 
-  const [selectedChoice, setSelectedChoice] = useState(question.userAnswer || "");
+  const [selectedChoice, setSelectedChoice] = useState(answerMap.get(question.id) || "");
+  console.log(question.id);
 
   return (
     <ListItem

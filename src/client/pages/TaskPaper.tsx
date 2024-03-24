@@ -37,7 +37,7 @@ import { getData, postData } from "../methods/fetch_data";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
 import MySuspense from "../components/MySuspense";
-import { AnswerChangeContext } from "../contexts/AnswerChangeContext";
+import AnswerProvider, { useAnswerMap } from "../components/AnswerProvider";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -88,66 +88,89 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-function PreviewList(props: { questions: PaperTree[], showProper: boolean }) {
+function PreviewListItem({
+  question,
+  showProper,
+}: {
+  question: PaperTree;
+  showProper: boolean;
+}) {
+  const [userAnswer, setUserAnswer] = useState<string | undefined>();
+  const answerMap = useAnswerMap();
+  const timerRef = useRef<number>();
+
+  useEffect(() => {
+    timerRef.current = window.setInterval(() => {
+      let newAnswer = answerMap.get(question.id);
+      if (newAnswer !== userAnswer) setUserAnswer(newAnswer);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerRef.current);
+    }
+  }, [answerMap]);
+
   return (
-    <List>
-      {props.questions.map((question) => (
-        <ListItem key={question.id} sx={{ mx: 0, px: 0 }}>
-          <ListItemButton
-            component="a"
-            variant="outlined"
-            color="neutral"
-            href={"#" + question.id}
-            sx={{ width: "100%", px: 1, py: 0.5, borderRadius: "md", m: 0, boxShadow: "sm", bgcolor: "background.body" }}
+    <ListItem key={question.id} sx={{ mx: 0, px: 0 }}>
+      <ListItemButton
+        component="a"
+        variant="outlined"
+        color="neutral"
+        href={"#" + question.id}
+        sx={{
+          width: "100%",
+          px: 1,
+          py: 0.5,
+          borderRadius: "md",
+          m: 0,
+          boxShadow: "sm",
+          bgcolor: "background.body",
+        }}
+      >
+        {!!question.no && <ListItemDecorator>{question.no}</ListItemDecorator>}
+        <ListItemContent>
+          <Stack
+            direction="column"
+            width="100%"
+            justifyContent="center"
+            spacing={1}
           >
-            {!!question.no && (
-              <ListItemDecorator>{question.no}</ListItemDecorator>
-            )}
-            <ListItemContent>
-              <Stack
-                direction="column"
-                width="100%"
-                justifyContent="center"
-                spacing={1}
-              >
-                <Stack
-                  direction="row"
-                  width="100%"
-                  justifyContent="space-between"
+            <Stack direction="row" width="100%" justifyContent="space-between">
+              <Chip variant="soft" color="primary" size="sm">
+                {`${question.modelName} ${question.score}分`}
+              </Chip>
+              {userAnswer && (
+                <Typography
+                  variant="solid"
+                  color="primary"
+                  level="body-sm"
+                  sx={{ borderRadius: "sm", px: 1 }}
                 >
-                  <Chip variant="soft" color="primary" size="sm">
-                    {`${question.modelName} ${question.score}分`}
-                  </Chip>
-                  {question.userAnswer && (
-                    <Typography
-                      variant="solid"
-                      color="primary"
-                      level="body-sm"
-                      sx={{ borderRadius: "sm", px: 1 }}
-                    >
-                      {question.userAnswer.split(":").join("")}
-                    </Typography>
-                  )}
-                  {props.showProper && question.proper && (
-                    <Typography
-                    variant="solid"
-                    color="success"
-                    level="body-sm"
-                    sx={{ borderRadius: "sm", px: 1 }}
-                  >
-                    {question.proper.split(":").join("")}
-                  </Typography>
-                  )}
-                </Stack>
-                {!!question.children && !!question.children.length && (
-                  <PreviewList questions={question.children} showProper={props.showProper} />
-                )}
-              </Stack>
-            </ListItemContent>
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
+                  {userAnswer.split(":").join("")}
+                </Typography>
+              )}
+              {showProper && question.proper && (
+                <Typography
+                  variant="solid"
+                  color="success"
+                  level="body-sm"
+                  sx={{ borderRadius: "sm", px: 1 }}
+                >
+                  {question.proper.split(":").join("")}
+                </Typography>
+              )}
+            </Stack>
+            {!!question.children && !!question.children.length && (
+              <List>
+                {question.children.map((child) => (
+                  <PreviewListItem question={child} showProper={showProper} />
+                ))}
+              </List>
+            )}
+          </Stack>
+        </ListItemContent>
+      </ListItemButton>
+    </ListItem>
   );
 }
 
@@ -198,41 +221,22 @@ export default function TaskPaper() {
     answer: string,
     isMultiSelect: boolean
   ) => {
-    setQuestions((prevQuestions) => {
-      let newAnswer = answer,
-        newQuestions = [...prevQuestions];
+    let newAnswer = answer;
 
-      if (isMultiSelect) {
-        const previousAnswer = answerMap.current.get(id);
-        if (previousAnswer) {
-          let answerArray = previousAnswer.split(":");
-          if (answerArray.includes(answer))
-            answerArray = answerArray.filter((x) => x !== answer);
-          else answerArray = [...answerArray, answer].sort();
-          newAnswer = answerArray.join(":");
-        }
+    if (isMultiSelect) {
+      const previousAnswer = answerMap.current.get(id);
+      if (previousAnswer) {
+        let answerArray = previousAnswer.split(":");
+        if (answerArray.includes(answer))
+          answerArray = answerArray.filter((x) => x !== answer);
+        else answerArray = [...answerArray, answer].sort();
+        newAnswer = answerArray.join(":");
       }
+    }
 
-      if (newAnswer) answerMap.current.set(id, newAnswer);
-      else answerMap.current.delete(id);
-      setAnswerCount(answerMap.current.size);
-
-      loop: for (let q of newQuestions) {
-        if (q.id === id) {
-          q.userAnswer = newAnswer;
-          break loop;
-        } else if (q.children && q.children.length) {
-          for (let c of q.children) {
-            if (c.id === id) {
-              c.userAnswer = newAnswer;
-              break loop;
-            }
-          }
-        }
-      }
-
-      return newQuestions;
-    });
+    if (newAnswer) answerMap.current.set(id, newAnswer);
+    else answerMap.current.delete(id);
+    setAnswerCount(answerMap.current.size);
   };
 
   const handleSubmit = useCallback(async () => {
@@ -248,14 +252,14 @@ export default function TaskPaper() {
               return {
                 id: y.id,
                 no: y.no,
-                answer: y.userAnswer,
+                answer: answerMap.current.get(y.id),
               };
             }),
           };
         } else {
           return {
             ...tmp,
-            answer: x.userAnswer,
+            answer: answerMap.current.get(x.id),
           };
         }
       });
@@ -373,7 +377,10 @@ export default function TaskPaper() {
                       </Box>
                     )}
                     {!!questions && questions.length > 0 && (
-                      <AnswerChangeContext.Provider value={handleAnswerChange}>
+                      <AnswerProvider
+                        answerMap={answerMap.current}
+                        changeAnswer={handleAnswerChange}
+                      >
                         <List>
                           {questions.map((item) => (
                             <PaperProblem
@@ -383,7 +390,7 @@ export default function TaskPaper() {
                             />
                           ))}
                         </List>
-                      </AnswerChangeContext.Provider>
+                      </AnswerProvider>
                     )}
                   </Sheet>
                 </Grid>
@@ -446,7 +453,20 @@ export default function TaskPaper() {
                   <Alert variant="soft" color="primary">
                     {data.apiSummary}
                   </Alert>
-                  <PreviewList questions={questions} showProper={showProper} />
+                  <AnswerProvider
+                    answerMap={answerMap.current}
+                    changeAnswer={handleAnswerChange}
+                  >
+                    <List>
+                      {questions.map((question) => (
+                        <PreviewListItem
+                          key={question.id}
+                          question={question}
+                          showProper={showProper}
+                        />
+                      ))}
+                    </List>
+                  </AnswerProvider>
                 </Grid>
               </>
             )}

@@ -17,7 +17,6 @@ export interface PaperTree {
   content: string;
   answers?: Choice[];
   noChoiceAnswer?: string;
-  userAnswer: string | null;
   proper?: string;
   analysis?: string;
   hasVideo: boolean;
