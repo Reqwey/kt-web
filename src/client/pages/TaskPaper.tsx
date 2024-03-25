@@ -107,7 +107,7 @@ function PreviewListItem({
 
     return () => {
       window.clearInterval(timerRef.current);
-    }
+    };
   }, [answerMap]);
 
   return (
@@ -174,12 +174,32 @@ function PreviewListItem({
   );
 }
 
+function PreviewCount({ answerMap, totalCount }: { answerMap: AnswerMap, totalCount: number }) {
+  const [count, setCount] = useState<number>();
+  const timerRef = useRef<number>();
+
+  useEffect(() => {
+    timerRef.current = window.setInterval(() => {
+      setCount(answerMap.size);
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerRef.current);
+    };
+  }, [answerMap]);
+
+  return (
+    <Typography level="title-md" color="primary">
+      {`${count}/${totalCount}`}
+    </Typography>
+  );
+}
+
 export default function TaskPaper() {
   const { taskId, paperId } = useParams();
   const navigate = useNavigate();
   const [questions, setQuestions] = useState<PaperTree[]>([]);
   const [showProper, setShowProper] = useState(false);
-  const [answerCount, setAnswerCount] = useState(0);
   // const [answerData, setAnswerData] = useState<AnswerData>({
   //   client_time: new Date().toISOString(),
   //   duration: 0,
@@ -236,12 +256,17 @@ export default function TaskPaper() {
 
     if (newAnswer) answerMap.current.set(id, newAnswer);
     else answerMap.current.delete(id);
-    setAnswerCount(answerMap.current.size);
   };
 
   const handleSubmit = useCallback(async () => {
     try {
       if (!questions || !paperId) throw new Error("请等待题面加载完毕");
+      if (
+        answerMap.current.size < data.summary.totalCount &&
+        confirmModalOpen
+      ) {
+        setConfirmModalOpen(true);
+      }
 
       let allAnswer = questions.map((x) => {
         const tmp = { id: x.id, no: x.no || "--" };
@@ -325,7 +350,10 @@ export default function TaskPaper() {
       <ConfirmModal
         open={confirmModalOpen}
         setOpen={setConfirmModalOpen}
-        handleSubmit={handleSubmit}
+        handleSubmit={() => {
+          setConfirmModalOpen(false);
+          handleSubmit();
+        }}
       />
       <Box
         sx={{
@@ -415,20 +443,15 @@ export default function TaskPaper() {
                     bgcolor="background.body"
                     boxShadow="md"
                   >
-                    {data.questions && (
-                      <Typography level="title-md" color="primary">
-                        {`${answerCount}/${data.summary.totalCount}`}
-                      </Typography>
-                    )}
+                    <PreviewCount
+                      answerMap={answerMap.current}
+                      totalCount={data.summary.totalCount || 0}
+                    />
 
                     <Button
                       size="sm"
                       fullWidth
-                      onClick={() => {
-                        if (answerCount === data.summary.totalCount)
-                          handleSubmit();
-                        else setConfirmModalOpen(true);
-                      }}
+                      onClick={handleSubmit}
                       loading={isMutating}
                     >
                       提交
