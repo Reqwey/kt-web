@@ -137,7 +137,9 @@ function PreviewListItem({
           >
             <Stack direction="row" width="100%" justifyContent="space-between">
               <Chip variant="soft" color="primary" size="sm">
-                {`${question.modelName} ${question.score}分`}
+                {`${question.subjectQuestionTypeName || question.modelName} ${
+                  question.score
+                }分`}
               </Chip>
               {userAnswer && (
                 <Typography
@@ -174,7 +176,13 @@ function PreviewListItem({
   );
 }
 
-function PreviewCount({ answerMap, totalCount }: { answerMap: AnswerMap, totalCount: number }) {
+function PreviewCount({
+  answerMap,
+  totalCount,
+}: {
+  answerMap: AnswerMap;
+  totalCount: number;
+}) {
   const [count, setCount] = useState<number>();
   const timerRef = useRef<number>();
 
@@ -261,12 +269,6 @@ export default function TaskPaper() {
   const handleSubmit = useCallback(async () => {
     try {
       if (!questions || !paperId) throw new Error("请等待题面加载完毕");
-      if (
-        answerMap.current.size < data.summary.totalCount &&
-        confirmModalOpen
-      ) {
-        setConfirmModalOpen(true);
-      }
 
       let allAnswer = questions.map((x) => {
         const tmp = { id: x.id, no: x.no || "--" };
@@ -293,10 +295,10 @@ export default function TaskPaper() {
         taskId,
         paperId,
         answer: allAnswer,
-        client_time: timeRef.current?.toISOString(),
+        client_time: new Date().getTime(),
         duration: (
           (new Date().getTime() - timeRef.current?.getTime()) /
-          (1000 * 60)
+          1000
         ).toFixed(3),
         photo: null,
         vocabularySchedule: null,
@@ -327,6 +329,14 @@ export default function TaskPaper() {
     }
   }, [questions]);
 
+  const handleCheck = () => {
+    if (answerMap.current.size < data.summary.totalCount && confirmModalOpen) {
+      setConfirmModalOpen(true);
+    } else {
+      handleSubmit();
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -350,10 +360,7 @@ export default function TaskPaper() {
       <ConfirmModal
         open={confirmModalOpen}
         setOpen={setConfirmModalOpen}
-        handleSubmit={() => {
-          setConfirmModalOpen(false);
-          handleSubmit();
-        }}
+        handleSubmit={handleSubmit}
       />
       <Box
         sx={{
@@ -451,7 +458,7 @@ export default function TaskPaper() {
                     <Button
                       size="sm"
                       fullWidth
-                      onClick={handleSubmit}
+                      onClick={handleCheck}
                       loading={isMutating}
                     >
                       提交

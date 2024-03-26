@@ -176,7 +176,10 @@ export default function TaskResult() {
                             width="100%"
                             justifyContent="space-between"
                           >
-                            <Box>{item.question.modelName}</Box>
+                            <Box>
+                              {item.question.subjectQuestionTypeName ||
+                                item.question.modelName}
+                            </Box>
                             <Box>
                               {item.answer
                                 ? item.answer.split(":").join("")
@@ -253,7 +256,8 @@ export default function TaskResult() {
                       size="sm"
                       sx={{ ml: 1 }}
                     >
-                      {exercise.question.modelName}
+                      {exercise.question.subjectQuestionTypeName ||
+                        exercise.question.modelName}
                     </Chip>
                   </Typography>
 

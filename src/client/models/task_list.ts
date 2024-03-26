@@ -25,6 +25,7 @@ export interface TaskListItem {
   publishedAt: string;
   finishAt: string | null;
   endAt: string;
+  correctPercent: number | null;
 }
 
 export interface TaskListData {
@@ -87,4 +88,11 @@ export function splitTime(time: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export function getGradeColor(grade: number, variant: ColorVariant): string {
+  if (grade < 25) return red[variant];
+  else if (grade < 50) return orange[variant];
+  else if (grade < 75) return lime[variant];
+  else return green[variant];
 }

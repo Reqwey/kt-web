@@ -98,7 +98,7 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
             <></>
           )}
           <Chip variant="soft" color="primary" size="sm" sx={{ ml: 1 }}>
-            {question.modelName}
+            {question.subjectQuestionTypeName || question.modelName}
           </Chip>
         </Typography>
 

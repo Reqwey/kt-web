@@ -1,25 +1,18 @@
 import React from "react";
 
 import {
-  Box,
   Card,
   CardOverflow,
   Chip,
   CardContent,
   Sheet,
-  Button,
-  RadioGroup,
-  Radio,
   List,
   ListItem,
-  ListSubheader,
   Typography,
   Stack,
 } from "@mui/joy";
 
 import {
-  ArrowBackIosNewRounded,
-  ArrowForwardIosRounded,
   AccessTime,
   HistoryToggleOff,
   ArrowForward,
@@ -31,8 +24,8 @@ import {
 } from "@mui/icons-material";
 
 import {
-  ColorVariant,
   TaskListItem,
+  getGradeColor,
   getSubjectColor,
   splitTime,
 } from "../models/task_list";
@@ -105,24 +98,12 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                   size="sm"
                   sx={(theme) => ({
                     [theme.getColorSchemeSelector("light")]: {
-                      backgroundColor: getSubjectColor(
-                        task.subjectId,
-                        100 as ColorVariant
-                      ),
-                      color: getSubjectColor(
-                        task.subjectId,
-                        900 as ColorVariant
-                      ),
+                      backgroundColor: getSubjectColor(task.subjectId, 100),
+                      color: getSubjectColor(task.subjectId, 900),
                     },
                     [theme.getColorSchemeSelector("dark")]: {
-                      backgroundColor: getSubjectColor(
-                        task.subjectId,
-                        900 as ColorVariant
-                      ),
-                      color: getSubjectColor(
-                        task.subjectId,
-                        50 as ColorVariant
-                      ),
+                      backgroundColor: getSubjectColor(task.subjectId, 900),
+                      color: getSubjectColor(task.subjectId, 50),
                     },
                   })}
                 >
@@ -157,15 +138,47 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                   justifyContent: "space-between",
                 }}
               >
-                <Stack direction="row">
-                  <Chip
-                    variant="outlined"
-                    color={task.allowSubmitIfDelay ? "success" : "danger"}
-                    size="sm"
-                    sx={{ mr: 1 }}
-                  >
-                    {task.allowSubmitIfDelay ? "允许晚交" : "不可晚交"}
-                  </Chip>
+                <Stack direction="row" spacing={2}>
+                  {task.finishAt ? (
+                    task.correctPercent ? (
+                      <Typography
+                        level="body-xs"
+                        sx={(theme) => ({
+                          fontWeight: "md",
+                          [theme.getColorSchemeSelector("light")]: {
+                            color: getGradeColor(
+                              task.correctPercent as any,
+                              600
+                            ),
+                          },
+                          [theme.getColorSchemeSelector("dark")]: {
+                            color: getGradeColor(
+                              task.correctPercent as any,
+                              400
+                            ),
+                          },
+                        })}
+                      >
+                        {task.correctPercent + "%"}
+                      </Typography>
+                    ) : (
+                      <Typography
+                        level="body-xs"
+                        fontWeight="md"
+                        color="success"
+                      >
+                        已完成
+                      </Typography>
+                    )
+                  ) : (
+                    <Chip
+                      variant="outlined"
+                      color={task.allowSubmitIfDelay ? "success" : "danger"}
+                      size="sm"
+                    >
+                      {task.allowSubmitIfDelay ? "允许晚交" : "不可晚交"}
+                    </Chip>
+                  )}
                   {task.questionCount ? (
                     <Chip
                       variant="plain"
@@ -191,7 +204,6 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                     variant="plain"
                     color="warning"
                     size="sm"
-                    sx={{ mx: 1 }}
                     startDecorator={<VisibilityTwoTone fontSize="small" />}
                   >
                     {["互阅", "教师批阅", "自阅"][(task.markType - 1) % 3]}
@@ -199,7 +211,7 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                   <Typography
                     startDecorator={<AccessTime fontSize="small" />}
                     level="body-xs"
-                    sx={{ mx: 1, fontWeight: "md", color: "text.secondary" }}
+                    sx={{ fontWeight: "md", color: "text.secondary" }}
                   >
                     {splitTime(task.publishedAt)}
                   </Typography>
@@ -207,7 +219,7 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                     <Typography
                       startDecorator={<Done fontSize="small" />}
                       level="body-xs"
-                      sx={{ mx: 1, fontWeight: "md", color: "text.secondary" }}
+                      sx={{ fontWeight: "md", color: "text.secondary" }}
                     >
                       {splitTime(task.finishAt)}
                     </Typography>
@@ -215,7 +227,7 @@ const TaskList: React.FC<TaskListProps> = (props) => {
                     <Typography
                       startDecorator={<HistoryToggleOff fontSize="small" />}
                       level="body-xs"
-                      sx={{ mx: 1, fontWeight: "md", color: "text.secondary" }}
+                      sx={{ fontWeight: "md", color: "text.secondary" }}
                     >
                       {splitTime(task.endAt)}
                     </Typography>

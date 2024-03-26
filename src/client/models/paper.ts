@@ -12,6 +12,7 @@ export interface PaperTree {
   model: number;
   modelName: string;
   subModel: number | null;
+  subjectQuestionTypeName: string | null;
   score: number;
   source?: string;
   content: string;

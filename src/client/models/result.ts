@@ -101,7 +101,7 @@ export type Question = {
   difficultyLevel: any; // 难度级别类型未提供，暂时使用 any[]
   paperCount: number;
   attributeId: any; // 属性 ID 类型未提供，暂时使用 any[]
-  subjectQuestionTypeName: any; // 题型名称类型未提供，暂时使用 any[]
+  subjectQuestionTypeName: string | null;
   nodeList: any[]; // 节点列表类型未提供，暂时使用 any[]
   tkNodeList: any[]; // tkNodeList 类型未提供，暂时使用 any[]
   methodList: any[]; // 方法列表类型未提供，暂时使用 any[]
