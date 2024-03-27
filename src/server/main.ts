@@ -169,6 +169,20 @@ app.get("/api-task-info/:taskId", useHeaders, async (req, res) => {
   }
 });
 
+app.post("/api-task-favorite", useHeaders, async (req, res) => {
+  const { id, favorite } = req.body;
+  const url = `https://api.fuulea.com/v2/tasks/${id}/favorite/`;
+  try {
+    if (!req.fetcher) throw new Error("Fetcher is undefined");
+    if (favorite) await req.fetcher.put(url);
+    else await req.fetcher.delete(url);
+    res.status(200);
+  } catch (error: any) {
+    console.log(error);
+    res.json({ success: false, detail: error });
+  }
+});
+
 app.get("/api-paper/:paperId", useHeaders, async (req, res) => {
   const { paperId } = req.params;
 

@@ -77,10 +77,7 @@ const getDetailInfo = async (url: string) => {
 const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const { setOpen, taskId, userTaskId } = props;
   const [layout, setLayout] = useState("center" as "center" | "fullscreen");
-  const [detail, setDetail] = useState<{ index: number; id: number }>({
-    index: -1,
-    id: 0,
-  });
+  const [detail, setDetail] = useState<{ index: number; id: number }>();
   const [markFinishButtonShow, setMarkFinishButtonShow] = useState(false);
 
   const {
@@ -95,7 +92,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
     error: detailError,
     mutate: mutateDetail,
   } = useSWR(
-    detail.index !== -1
+    !!detail && detail.index !== -1
       ? `/api-task-info/${taskId}?userTaskId=${userTaskId}&detailId=${detail.id}`
       : null,
     getDetailInfo
@@ -104,7 +101,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
   const { trigger, isMutating } = useSWRMutation("/api-mark-finish", postData);
 
   useEffect(() => {
-    if (modalInfo && modalInfo.taskModules)
+    if (modalInfo && modalInfo.taskModules && !detail)
       setDetail({
         index: 0,
         id: modalInfo.taskModules[0].userTaskDetailId,
@@ -231,7 +228,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                       <Tabs
                         orientation="horizontal"
                         sx={{ width: "100%", mb: 1 }}
-                        value={`${detail.index}/${detail.id}`}
+                        value={detail ? `${detail.index}/${detail.id}` : null}
                         onChange={(_, value) => {
                           const [index, id] = (value as string)
                             .split("/")
@@ -280,8 +277,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                 <Typography fontSize="lg" fontWeight="lg">
                                   {detailInfo.title || modalInfo.title}
                                 </Typography>
-                                {modalInfo.taskModules[detail.index]
-                                  .finishAt ? (
+                                {!!detail &&
+                                modalInfo.taskModules[detail.index].finishAt ? (
                                   <Typography
                                     color="success"
                                     startDecorator={
@@ -325,29 +322,32 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                   </Stack>
                                 )}
                               </div>
-                              <Button
-                                component="a"
-                                variant="soft"
-                                href={
-                                  modalInfo.taskModules[detail.index].exerciseId
-                                    ? `/exercise/${
-                                        modalInfo.taskModules[detail.index]
-                                          .exerciseId
-                                      }?name=${
-                                        detailInfo.title || modalInfo.title
-                                      }`
-                                    : `/task/${detailInfo.task.id}/paper/${detailInfo.paperId}`
-                                }
-                                target="_blank"
-                                endDecorator={<ArrowForward />}
-                                sx={{
-                                  ml: "auto",
-                                  alignSelf: "center",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                进入任务
-                              </Button>
+                              {!!detail && (
+                                <Button
+                                  component="a"
+                                  variant="soft"
+                                  href={
+                                    modalInfo.taskModules[detail.index]
+                                      .exerciseId
+                                      ? `/exercise/${
+                                          modalInfo.taskModules[detail.index]
+                                            .exerciseId
+                                        }?name=${
+                                          detailInfo.title || modalInfo.title
+                                        }`
+                                      : `/task/${detailInfo.task.id}/paper/${detailInfo.paperId}`
+                                  }
+                                  target="_blank"
+                                  endDecorator={<ArrowForward />}
+                                  sx={{
+                                    ml: "auto",
+                                    alignSelf: "center",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  进入任务
+                                </Button>
+                              )}
                             </CardContent>
                           </Card>
                         )}
@@ -451,6 +451,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                           </Grid>
                         )}
                         {!detailInfo.paperId &&
+                          !!detail &&
                           !modalInfo.taskModules[detail.index].finishAt &&
                           markFinishButtonShow && (
                             <Box

@@ -26,6 +26,7 @@ export interface TaskListItem {
   finishAt: string | null;
   endAt: string;
   correctPercent: number | null;
+  isFavorite: boolean;
 }
 
 export interface TaskListData {

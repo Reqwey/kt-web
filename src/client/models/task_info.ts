@@ -1,5 +1,10 @@
 import { CourseAttachment, CourseVideo } from "./course";
 
+export type TaskInfo = {
+	taskId: number;
+	userTaskId: number;
+}
+
 export interface TaskInfoData {
 	title: string;
 	firstName: string;

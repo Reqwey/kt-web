@@ -44,18 +44,15 @@ import config from "../../../package.json";
 import useSWR from "swr";
 import { getData } from "../methods/fetch_data";
 import MySuspense from "../components/MySuspense";
+import TaskDetailProvider from "../components/TaskDetailProvider";
 
 interface SearchModalProps {
   open: boolean;
   setOpen(value: boolean): void;
-  setTaskId(value: number): void;
-  setUserTaskId(value: number): void;
-  setTaskDetailModalOpen(value: boolean): void;
 }
 
 const SearchModal: React.FC<SearchModalProps> = (props) => {
-  const { open, setOpen, setTaskId, setUserTaskId, setTaskDetailModalOpen } =
-    props;
+  const { open, setOpen } = props;
   const [page, setPage] = useState(1);
   const [pattern, setPattern] = useState("");
 
@@ -91,14 +88,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
         <Divider />
         <Box sx={{ overflow: "auto", ml: -2, mr: -2, mt: -1, mb: -1 }}>
           <MySuspense loading={isLoading || !data}>
-            {data && data.results && (
-              <TaskList
-                data={data.results}
-                setTaskId={setTaskId}
-                setUserTaskId={setUserTaskId}
-                setTaskDetailModalOpen={setTaskDetailModalOpen}
-              />
-            )}
+            {data && data.results && <TaskList data={data.results} />}
           </MySuspense>
         </Box>
         <Divider />
@@ -236,9 +226,6 @@ export default function Dashboard() {
   const [subjectId, setSubjectId] = useState(-1);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  const [taskId, setTaskId] = useState(0);
-  const [userTaskId, setUserTaskId] = useState(0);
-  const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [category, setCategory] = useState<string>("unfinished");
   const [page, setPage] = useState(1);
 
@@ -343,7 +330,7 @@ export default function Dashboard() {
   }, [onDrag, stopDragging, onTouchDrag]);
 
   return (
-    <>
+    <TaskDetailProvider>
       <Helmet>
         <title>任务中心 | Kunter Online</title>
       </Helmet>
@@ -359,21 +346,8 @@ export default function Dashboard() {
           <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
         </div>
       </Snackbar>
-      <SearchModal
-        open={searchModalOpen}
-        setOpen={setSearchModalOpen}
-        setTaskId={setTaskId}
-        setUserTaskId={setUserTaskId}
-        setTaskDetailModalOpen={setTaskDetailModalOpen}
-      />
+      <SearchModal open={searchModalOpen} setOpen={setSearchModalOpen} />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
-      {!!taskDetailModalOpen && (
-        <TaskDetailModal
-          taskId={taskId}
-          userTaskId={userTaskId}
-          setOpen={setTaskDetailModalOpen}
-        />
-      )}
       <Box
         sx={{
           display: "flex",
@@ -621,18 +595,11 @@ export default function Dashboard() {
               </Button>
             </Box>
             <MySuspense loading={isLoading || !data}>
-              {data && data.results && (
-                <TaskList
-                  setTaskId={setTaskId}
-                  setUserTaskId={setUserTaskId}
-                  setTaskDetailModalOpen={setTaskDetailModalOpen}
-                  data={data.results}
-                />
-              )}
+              {data && data.results && <TaskList data={data.results} />}
             </MySuspense>
           </Box>
         </Sheet>
       </Box>
-    </>
+    </TaskDetailProvider>
   );
 }
