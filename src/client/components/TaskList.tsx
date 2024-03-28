@@ -79,9 +79,10 @@ const TaskListCell: React.FC<TaskListCellProps> = (props) => {
     token: localStorage.getItem("token"),
   };
 
-  const handleFavorite = async () => {
+  const handleFavorite = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    setFavorite(!favorite);
     try {
-      setFavorite(!favorite);
       await emitFavorite(config);
     } catch (error) {
       console.log(error);
@@ -93,7 +94,13 @@ const TaskListCell: React.FC<TaskListCellProps> = (props) => {
   }, [task]);
 
   return (
-    <ListItem key={task.taskId}>
+    <ListItem
+      key={task.taskId}
+      onClick={() => {
+        setTaskInfo(task as TaskInfo);
+        setTaskDetailModalOpen(true);
+      }}
+    >
       <Card
         variant="plain"
         sx={{
@@ -154,12 +161,7 @@ const TaskListCell: React.FC<TaskListCellProps> = (props) => {
             {task.description}
           </Typography>
         )}
-        <CardOverflow
-          onClick={() => {
-            setTaskInfo(task as TaskInfo);
-            setTaskDetailModalOpen(true);
-          }}
-        >
+        <CardOverflow>
           <CardContent
             orientation="horizontal"
             sx={{

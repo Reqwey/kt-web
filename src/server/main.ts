@@ -174,7 +174,7 @@ app.post("/api-task-favorite", useHeaders, async (req, res) => {
   const url = `https://api.fuulea.com/v2/tasks/${id}/favorite/`;
   try {
     if (!req.fetcher) throw new Error("Fetcher is undefined");
-    if (favorite) await req.fetcher.put(url);
+    if (!favorite) await req.fetcher.put(url);
     else await req.fetcher.delete(url);
     res.status(200);
   } catch (error: any) {

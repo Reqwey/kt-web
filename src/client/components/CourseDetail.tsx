@@ -110,8 +110,8 @@ export default function CourseDetail(props: CourseDetailProps) {
       <Box
         sx={{
           overflow: "hidden",
-          width: "100dvw",
-          height: "100dvh",
+          width: "100vw",
+          height: "100vh",
           display: "flex",
           flexDirection: "column",
         }}

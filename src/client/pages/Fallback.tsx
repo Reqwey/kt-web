@@ -8,6 +8,7 @@ export default function Fallback({ error, resetErrorBoundary }: FallbackProps) {
       variant="soft"
       color="danger"
       sx={{
+        m: 0,
         width: "100vw",
         height: "100vh",
         display: "flex",

@@ -27,7 +27,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { getData } from "../methods/fetch_data";
 import useSWR from "swr";
 import MySuspense from "../components/MySuspense";
-import { Exercise, ResultData } from "../models/result";
+import { Exercise, Question, ResultData } from "../models/result";
 import { splitTime } from "../models/task_list";
 import { useVideoPlayer } from "../components/VideoPlayerProvider";
 
@@ -57,6 +57,7 @@ export default function TaskResult() {
   const [flattenedExercises, setFlattenedExercises] = useState<Exercise[]>();
   const [selectedId, setSelectedId] = useState<number>();
   const [exercise, setExercise] = useState<Exercise>();
+  const [parent, setParent] = useState<Question>();
 
   const setVideoUrl = useVideoPlayer();
 
@@ -83,6 +84,16 @@ export default function TaskResult() {
     }
   }, [selectedId, flattenedExercises]);
 
+  useEffect(() => {
+    if (data && exercise && exercise.question.parentId) {
+      setParent(
+        data.exercises.filter(
+          (x) => x.question.id === exercise.question.parentId
+        )[0].question
+      );
+    }
+  }, [data, exercise]);
+
   return (
     <>
       <Helmet>
@@ -93,8 +104,8 @@ export default function TaskResult() {
       <Box
         sx={{
           overflow: "hidden",
-          width: "100dvw",
-          height: "100dvh",
+          width: "100vw",
+          height: "100vh",
           display: "flex",
           flexDirection: "column",
         }}
@@ -208,7 +219,7 @@ export default function TaskResult() {
                   }}
                   variant="plain"
                 >
-                  {exercise.question.parentId && (
+                  {parent && (
                     <Box
                       className="KtContent"
                       sx={{
@@ -217,9 +228,7 @@ export default function TaskResult() {
                         overflowWrap: "break-word",
                       }}
                       dangerouslySetInnerHTML={{
-                        __html: data.exercises.filter(
-                          (x) => x.question.id === exercise.question.parentId
-                        )[0].question.content,
+                        __html: parent.content,
                       }}
                     />
                   )}
@@ -326,136 +335,156 @@ export default function TaskResult() {
                         ))}
                       </List>
                     )}
-                  <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
-                    <Chip variant="solid" size="sm" color="primary">
-                      我的答案
-                    </Chip>
-                    <CardContent>
-                      {exercise.answer}
-                      {exercise.photos.map(
-                        (src, index) =>
-                          src !== "**" && <img key={index} src={src}></img>
-                      )}
-                    </CardContent>
-                  </Card>
-                  {exercise.question.model !== 3 && (
-                    <Card variant="outlined" sx={{ borderRadius: "md", my: 1 }}>
-                      <Chip variant="solid" size="sm" color="primary">
-                        答案
+                  <Stack direction="column" spacing={2}>
+                    <Card
+                      variant="outlined"
+                      color="primary"
+                      sx={{ boxShadow: "sm" }}
+                    >
+                      <Chip variant="outlined" size="sm" color="primary">
+                        我的答案
                       </Chip>
                       <CardContent>
-                        {exercise.question.model <= 1 &&
-                          exercise.question.proper}
-                        {exercise.question.noChoiceAnswer && (
-                          <Box
-                            className="KtContent"
-                            sx={{
-                              width: "100%",
-                              wordBreak: "break-all",
-                              overflowWrap: "break-word",
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html: exercise.question.noChoiceAnswer || "",
-                            }}
-                          />
+                        {exercise.answer}
+                        {exercise.photos.map(
+                          (src, index) =>
+                            src !== "**" && <img key={index} src={src}></img>
                         )}
                       </CardContent>
                     </Card>
-                  )}
-                  {exercise.question.analysis && (
-                    <Card
-                      variant="soft"
-                      className="KtContent"
-                      sx={{ borderRadius: "md" }}
-                    >
-                      <Chip variant="solid" size="sm" color="success">
-                        解析
-                      </Chip>
-                      <Box
-                        className="KtContent"
-                        sx={{
-                          width: "100%",
-                          wordBreak: "break-all",
-                          overflowWrap: "break-word",
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: exercise.question.analysis || "",
-                        }}
-                      />
-                    </Card>
-                  )}
-                  {exercise.question.hasVideo && exercise.question.video && (
-                    <Card
-                      sx={{
-                        width: "min(300px, 100%)",
-                        height: "min-content",
-                        cursor: "pointer",
-                        "&:hover": {
-                          boxShadow: "md",
-                          borderColor: "neutral.outlinedHoverBorder",
-                        },
-                        bgcolor: "initial",
-                        p: 0,
-                      }}
-                      onClick={() => setVideoUrl(exercise.question.video)}
-                    >
-                      <Box sx={{ position: "relative" }}>
-                        <AspectRatio ratio="3/2">
-                          <figure>
-                            <img
-                              src={exercise.question.cover}
-                              srcSet={exercise.question.cover}
-                              loading="lazy"
-                              alt="视频解析"
+                    {exercise.question.model !== 3 && (
+                      <Card variant="outlined" sx={{ boxShadow: "sm" }}>
+                        <Chip variant="solid" size="sm" color="success">
+                          答案
+                        </Chip>
+                        <CardContent>
+                          {exercise.question.model <= 1 &&
+                            exercise.question.proper}
+                          {exercise.question.noChoiceAnswer && (
+                            <Box
+                              className="KtContent"
+                              sx={{
+                                width: "100%",
+                                wordBreak: "break-all",
+                                overflowWrap: "break-word",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: exercise.question.noChoiceAnswer || "",
+                              }}
                             />
-                          </figure>
-                        </AspectRatio>
-                        <CardCover
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+                    {exercise.question.analysis && (
+                      <Card variant="outlined" sx={{ boxShadow: "sm" }}>
+                        <Chip variant="solid" size="sm" color="success">
+                          解析
+                        </Chip>
+                        <Box
+                          className="KtContent"
                           sx={{
-                            opacity: 1,
-                            transition: "0.1s ease-in",
-                            background:
-                              "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                            width: "100%",
+                            wordBreak: "break-all",
+                            overflowWrap: "break-word",
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: exercise.question.analysis || "",
+                          }}
+                        />
+                      </Card>
+                    )}
+                    {parent && parent.analysis && (
+                      <Card variant="outlined" sx={{ boxShadow: "sm" }}>
+                        <Chip variant="solid" size="sm" color="success">
+                          题干解析
+                        </Chip>
+                        <Box
+                          className="KtContent"
+                          sx={{
+                            width: "100%",
+                            wordBreak: "break-all",
+                            overflowWrap: "break-word",
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: parent.analysis || "",
+                          }}
+                        />
+                      </Card>
+                    )}
+                    {exercise.question.hasVideo && exercise.question.video && (
+                      <Card
+                        sx={{
+                          width: "min(300px, 100%)",
+                          height: "min-content",
+                          cursor: "pointer",
+                          "&:hover": {
+                            boxShadow: "md",
+                            borderColor: "neutral.outlinedHoverBorder",
+                          },
+                          bgcolor: "initial",
+                          p: 0,
+                        }}
+                        onClick={() => setVideoUrl(exercise.question.video)}
+                      >
+                        <Box sx={{ position: "relative" }}>
+                          <AspectRatio ratio="3/2">
+                            <figure>
+                              <img
+                                src={exercise.question.cover}
+                                srcSet={exercise.question.cover}
+                                loading="lazy"
+                                alt="视频解析"
+                              />
+                            </figure>
+                          </AspectRatio>
+                          <CardCover
+                            sx={{
+                              opacity: 1,
+                              transition: "0.1s ease-in",
+                              background:
+                                "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
+                            }}
+                          >
+                            <div>
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <PlayArrowRounded
+                                  sx={{
+                                    color: "#fff",
+                                    fontSize: "70px",
+                                    bgcolor: "rgba(0 0 0 / 0.2)",
+                                    borderRadius: "lg",
+                                  }}
+                                />
+                              </Box>
+                            </div>
+                          </CardCover>
+                        </Box>
+                        <Typography
+                          level="body-lg"
+                          fontWeight="lg"
+                          sx={{
+                            p: 2,
+                            mt: -9,
+                            zIndex: 11,
+                            color: "#fff",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          <div>
-                            <Box
-                              sx={{
-                                p: 2,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <PlayArrowRounded
-                                sx={{
-                                  color: "#fff",
-                                  fontSize: "70px",
-                                  bgcolor: "rgba(0 0 0 / 0.2)",
-                                  borderRadius: "lg",
-                                }}
-                              />
-                            </Box>
-                          </div>
-                        </CardCover>
-                      </Box>
-                      <Typography
-                        level="body-lg"
-                        fontWeight="lg"
-                        sx={{
-                          p: 2,
-                          mt: -9,
-                          zIndex: 11,
-                          color: "#fff",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        视频解析
-                      </Typography>
-                    </Card>
-                  )}
+                          视频解析
+                        </Typography>
+                      </Card>
+                    )}
+                  </Stack>
                 </Sheet>
               )}
             </Grid>

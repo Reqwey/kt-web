@@ -6,8 +6,8 @@ export default function NotFound() {
   const navigate = useNavigate();
   return (
     <Box
-      width="100dvw"
-      height="100dvh"
+      width="100vw"
+      height="100vh"
       display="flex"
       alignItems="center"
       justifyContent="center"

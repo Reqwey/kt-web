@@ -54,8 +54,8 @@ export default function CourseModulesDrawer(props: CourseModulesDrawerProps) {
         variant="soft"
         sx={{
           borderRadius: layout === "center" ? "lg" : "unset",
-          width: layout === "center" ? "60dvw" : "100dvw",
-          height: layout === "center" ? "60dvh" : "100dvh",
+          width: layout === "center" ? "60vw" : "100vw",
+          height: layout === "center" ? "60vh" : "100vh",
           transition: "all 0.3s ease-in-out",
         }}
       >

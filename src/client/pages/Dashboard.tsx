@@ -74,7 +74,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
 
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
-      <ModalDialog sx={{ width: "80dvw" }} variant="soft">
+      <ModalDialog sx={{ width: "80vw" }} variant="soft">
         <Input
           placeholder="搜索所有任务…"
           variant="outlined"
@@ -144,7 +144,7 @@ const InfoModal = React.memo<InfoModalProps>((props) => {
   const { open, setOpen } = props;
   return (
     <Modal open={open} onClose={() => setOpen(false)}>
-      <ModalDialog sx={{ width: "80dvw" }}>
+      <ModalDialog sx={{ width: "80vw" }}>
         <Typography component="h2" startDecorator={<InfoOutlined />}>
           关于 Kunter {config.version}
         </Typography>
@@ -359,7 +359,7 @@ export default function Dashboard() {
         }}
       >
         <Box sx={{ width: leftWidth, marginRight: "-7.5px" }}>
-          <Sheet sx={{ height: "100dvh", overflow: "auto" }} variant="soft">
+          <Sheet sx={{ height: "100vh", overflow: "auto" }} variant="soft">
             <Sheet
               sx={{
                 display: "flex",
@@ -488,7 +488,7 @@ export default function Dashboard() {
             flex: 1,
             marginLeft: "-7.5px",
             width: "100%",
-            height: "100dvh",
+            height: "100vh",
             overflow: "hidden",
             position: "relative",
           }}
