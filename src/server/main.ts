@@ -307,6 +307,7 @@ app.post("/api-mark-finish", useHeaders, async (req, res) => {
 
 app.post("/api-check-paper", useHeaders, async (req, res) => {
   const { taskId, paperId } = req.body;
+  console.log(req.body);
 
   try {
     if (!req.fetcher) throw new Error("Fetcher is undefined");

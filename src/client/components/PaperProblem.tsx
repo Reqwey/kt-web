@@ -44,7 +44,6 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
   );
 
   const [selectedChoice, setSelectedChoice] = useState(answerMap.get(question.id) || "");
-  console.log(question.id);
 
   return (
     <ListItem
@@ -215,7 +214,7 @@ const PaperProblem: React.FC<RenderProblemProps> = (props) => {
               答案
             </Chip>
             <CardContent>
-              {question.model <= 1 && question.proper}
+              {question.model <= 1 && question.proper?.split(":").join("")}
               {question.noChoiceAnswer && (
                 <div
                   className="KtContent"

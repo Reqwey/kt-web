@@ -295,7 +295,7 @@ export default function TaskPaper() {
         taskId,
         paperId,
         answer: allAnswer,
-        client_time: new Date().getTime(),
+        client_time: new Date().toISOString(),
         duration: (
           (new Date().getTime() - timeRef.current?.getTime()) /
           1000
@@ -307,7 +307,6 @@ export default function TaskPaper() {
         token: localStorage.getItem("token"),
       });
       if (response.success) {
-        console.log(response);
         setSnackbarColor("success");
         if (response.id) {
           setSnackbarMessage("提交成功！正在跳转");

@@ -145,7 +145,15 @@ export default function TaskResult() {
                 >
                   <Box width="100%">
                     <Typography level="body-xs">得分</Typography>
-                    <Typography fontSize="xl4" lineHeight={1}>
+                    <Typography
+                      fontSize="xl4"
+                      lineHeight={1}
+                      endDecorator={
+                        <Typography level="body-md">
+                          / {data.summary.totalScore}
+                        </Typography>
+                      }
+                    >
                       {data.score}
                     </Typography>
                     <Typography level="body-xs">
@@ -345,7 +353,7 @@ export default function TaskResult() {
                         我的答案
                       </Chip>
                       <CardContent>
-                        {exercise.answer}
+                        {exercise.answer.split(":").join("")}
                         {exercise.photos.map(
                           (src, index) =>
                             src !== "**" && <img key={index} src={src}></img>
@@ -359,7 +367,7 @@ export default function TaskResult() {
                         </Chip>
                         <CardContent>
                           {exercise.question.model <= 1 &&
-                            exercise.question.proper}
+                            exercise.question.proper.split(":").join("")}
                           {exercise.question.noChoiceAnswer && (
                             <Box
                               className="KtContent"
