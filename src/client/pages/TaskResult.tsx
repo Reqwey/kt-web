@@ -85,12 +85,16 @@ export default function TaskResult() {
   }, [selectedId, flattenedExercises]);
 
   useEffect(() => {
-    if (data && exercise && exercise.question.parentId) {
-      setParent(
-        data.exercises.filter(
-          (x) => x.question.id === exercise.question.parentId
-        )[0].question
-      );
+    if (data && exercise) {
+      if (exercise.question.parentId) {
+        setParent(
+          data.exercises.filter(
+            (x) => x.question.id === exercise.question.parentId
+          )[0].question
+        );
+      } else {
+        setParent(undefined);
+      }
     }
   }, [data, exercise]);
 
