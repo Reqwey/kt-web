@@ -3,7 +3,6 @@ import { Helmet } from "react-helmet";
 import {
   AddLocationAltTwoTone,
   Done,
-  PlayArrowRounded,
 } from "@mui/icons-material";
 import {
   Box,
@@ -19,9 +18,7 @@ import {
   ListItemButton,
   ListItemDecorator,
   ListItemContent,
-  AspectRatio,
   CardContent,
-  CardCover,
 } from "@mui/joy";
 import { useLocation, useParams } from "react-router-dom";
 import { getData } from "../methods/fetch_data";
@@ -29,7 +26,6 @@ import useSWR from "swr";
 import MySuspense from "../components/MySuspense";
 import { Exercise, Question, ResultData } from "../models/result";
 import { splitTime } from "../models/task_list";
-import { useVideoPlayer } from "../components/VideoPlayerProvider";
 import VideoCard from "../components/VideoCard";
 
 const getTaskResult = async (url: string) => {
@@ -59,8 +55,6 @@ export default function TaskResult() {
   const [selectedId, setSelectedId] = useState<number>();
   const [exercise, setExercise] = useState<Exercise>();
   const [parent, setParent] = useState<Question>();
-
-  const setVideoUrl = useVideoPlayer();
 
   useEffect(() => {
     if (data) {

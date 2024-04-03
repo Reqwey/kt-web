@@ -3,34 +3,27 @@ import {
   Close,
   CloseFullscreenRounded,
   OpenInFullRounded,
-  PlayArrowRounded,
 } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  AspectRatio,
   Box,
   Button,
   Card,
   CardContent,
-  CardCover,
   Chip,
   DialogContent,
-  DialogTitle,
-  Drawer,
   Grid,
   IconButton,
   List,
   ListItem,
   Modal,
-  ModalClose,
   ModalDialog,
   Typography,
 } from "@mui/joy";
 import { CourseModule } from "../models/course";
 import MySuspense from "./MySuspense";
-import { useVideoPlayer } from "./VideoPlayerProvider";
 import AttachmentList from "./AttachmentList";
 import { useState } from "react";
 import VideoCard from "./VideoCard";
@@ -45,7 +38,6 @@ interface CourseModulesModalProps {
 export default function CourseModulesModal(props: CourseModulesModalProps) {
   const { loading, moduleName, data, setOpen } = props;
   const [layout, setLayout] = useState("center" as "center" | "fullscreen");
-  const setVideoUrl = useVideoPlayer();
 
   return (
     <Modal open onClose={() => setOpen(false)}>

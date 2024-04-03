@@ -10,18 +10,14 @@ import ListItemDecorator from "@mui/joy/ListItemDecorator";
 import AddLocationAltTwoToneIcon from "@mui/icons-material/AddLocationAltTwoTone";
 import {
   Alert,
-  AspectRatio,
-  Box,
   Card,
   CardContent,
-  CardCover,
   Input,
   Link,
   ListItemButton,
 } from "@mui/joy";
-import { LinkOutlined, PlayArrowRounded } from "@mui/icons-material";
+import { LinkOutlined } from "@mui/icons-material";
 import { Choice, PaperTree } from "../models/paper";
-import { useVideoPlayer } from "./VideoPlayerProvider";
 import { useAnswerChange, useAnswerMap } from "./AnswerProvider";
 import VideoCard from "./VideoCard";
 
@@ -119,7 +115,6 @@ interface ProblemProps {
 function Problem(props: ProblemProps) {
   const { question, showProper } = props;
 
-  const setVideoUrl = useVideoPlayer();
   const answerMap = useAnswerMap();
   const answerChangeCallback = useAnswerChange();
   const defferedChoice = useDeferredValue(answerMap[question.id] || "");
