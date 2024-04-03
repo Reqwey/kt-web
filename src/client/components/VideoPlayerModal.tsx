@@ -52,7 +52,16 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = (props) => {
   return (
     !!videoUrl && (
       <Modal open onClose={() => setVideoUrl(null)}>
-        <ModalDialog layout="center" size="lg">
+        <ModalDialog
+          layout="center"
+          size="lg"
+          sx={{
+            p: 0,
+            border: "unset",
+            borderColor: "unset",
+            backgroundColor: "transparent",
+          }}
+        >
           <DialogContent>
             <Player videoUrl={videoUrl} />
           </DialogContent>

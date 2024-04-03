@@ -1,7 +1,6 @@
-import { ReactNode, createContext, useContext } from "react";
-import { AnswerMap } from "../models/paper";
+import { ReactNode, createContext, useContext, useDeferredValue } from "react";
 
-const AnswerMapContext = createContext<AnswerMap>(new Map());
+const AnswerMapContext = createContext<any>(new Object());
 const AnswerChangeContext = createContext<any>(() => {});
 
 export function useAnswerMap() {
@@ -18,14 +17,17 @@ export default function AnswerProvider({
   changeAnswer,
 }: {
   children: ReactNode;
-  answerMap: AnswerMap;
+  answerMap: any;
   changeAnswer: any;
 }) {
+  const deferredAnswerMap = useDeferredValue(answerMap);
+  const deferredChangeAnswer = useDeferredValue(changeAnswer);
+
   return (
-    <AnswerMapContext.Provider value={answerMap}>
-      <AnswerChangeContext.Provider value={changeAnswer}>
+    <AnswerMapContext.Provider value={deferredAnswerMap}>
+      <AnswerChangeContext.Provider value={deferredChangeAnswer}>
         {children}
       </AnswerChangeContext.Provider>
     </AnswerMapContext.Provider>
-  )
+  );
 }

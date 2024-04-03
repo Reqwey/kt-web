@@ -30,6 +30,7 @@ import MySuspense from "../components/MySuspense";
 import { Exercise, Question, ResultData } from "../models/result";
 import { splitTime } from "../models/task_list";
 import { useVideoPlayer } from "../components/VideoPlayerProvider";
+import VideoCard from "../components/VideoCard";
 
 const getTaskResult = async (url: string) => {
   const res: ResultData = await getData(url, {
@@ -425,76 +426,11 @@ export default function TaskResult() {
                       </Card>
                     )}
                     {exercise.question.hasVideo && exercise.question.video && (
-                      <Card
-                        sx={{
-                          width: "min(300px, 100%)",
-                          height: "min-content",
-                          cursor: "pointer",
-                          "&:hover": {
-                            boxShadow: "md",
-                            borderColor: "neutral.outlinedHoverBorder",
-                          },
-                          bgcolor: "initial",
-                          p: 0,
-                        }}
-                        onClick={() => setVideoUrl(exercise.question.video)}
-                      >
-                        <Box sx={{ position: "relative" }}>
-                          <AspectRatio ratio="3/2">
-                            <figure>
-                              <img
-                                src={exercise.question.cover}
-                                srcSet={exercise.question.cover}
-                                loading="lazy"
-                                alt="视频解析"
-                              />
-                            </figure>
-                          </AspectRatio>
-                          <CardCover
-                            sx={{
-                              opacity: 1,
-                              transition: "0.1s ease-in",
-                              background:
-                                "linear-gradient(180deg, transparent 62%, rgba(0,0,0,0.00345888) 63.94%, rgba(0,0,0,0.014204) 65.89%, rgba(0,0,0,0.0326639) 67.83%, rgba(0,0,0,0.0589645) 69.78%, rgba(0,0,0,0.0927099) 71.72%, rgba(0,0,0,0.132754) 73.67%, rgba(0,0,0,0.177076) 75.61%, rgba(0,0,0,0.222924) 77.56%, rgba(0,0,0,0.267246) 79.5%, rgba(0,0,0,0.30729) 81.44%, rgba(0,0,0,0.341035) 83.39%, rgba(0,0,0,0.367336) 85.33%, rgba(0,0,0,0.385796) 87.28%, rgba(0,0,0,0.396541) 89.22%, rgba(0,0,0,0.4) 91.17%)",
-                            }}
-                          >
-                            <div>
-                              <Box
-                                sx={{
-                                  p: 2,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                <PlayArrowRounded
-                                  sx={{
-                                    color: "#fff",
-                                    fontSize: "70px",
-                                    bgcolor: "rgba(0 0 0 / 0.2)",
-                                    borderRadius: "lg",
-                                  }}
-                                />
-                              </Box>
-                            </div>
-                          </CardCover>
-                        </Box>
-                        <Typography
-                          level="body-lg"
-                          fontWeight="lg"
-                          sx={{
-                            p: 2,
-                            mt: -9,
-                            zIndex: 11,
-                            color: "#fff",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          视频解析
-                        </Typography>
-                      </Card>
+                      <VideoCard
+                        url={exercise.question.video}
+                        title="视频解析"
+                        coverImg={exercise.question.cover}
+                      />
                     )}
                   </Stack>
                 </Sheet>

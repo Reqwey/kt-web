@@ -26,7 +26,7 @@ export interface PaperTree {
   judgeProper: {
     content: string[];
     userId: string;
-  };
+  } | null;
 }
 
 export interface PaperData {
@@ -37,8 +37,6 @@ export interface PaperData {
   attachments: CourseAttachment[];
   nonParentPaperQuestions: number[];
 }
-
-export type AnswerMap = Map<number, string>;
 
 export interface Answer {
   id: number;

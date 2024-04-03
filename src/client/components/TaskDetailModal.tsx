@@ -134,7 +134,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
 
   return (
     <>
-      <Modal open>
+      <Modal open onClose={() => setOpen(false)}>
         <ModalDialog
           aria-labelledby="task-detail-modal-title"
           layout={layout}
@@ -195,9 +195,9 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                 color="primary"
                 size="sm"
                 sx={{ borderRadius: "50%" }}
-                onClick={() => {
-                  setLayout(layout === "center" ? "fullscreen" : "center");
-                }}
+                onClick={() =>
+                  setLayout(layout === "center" ? "fullscreen" : "center")
+                }
               >
                 {layout === "center" ? (
                   <OpenInFullRounded />
@@ -210,9 +210,7 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                 color="danger"
                 size="sm"
                 sx={{ borderRadius: "50%" }}
-                onClick={() => {
-                  setOpen(false);
-                }}
+                onClick={() => setOpen(false)}
               >
                 <Close />
               </IconButton>

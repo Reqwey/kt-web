@@ -24,7 +24,7 @@ import logoSrc from "../assets/logo.png";
 import { useCallback, useEffect, useState } from "react";
 import LoadingModal from "../components/LoadingModal";
 import CourseChapter from "./CourseChapter";
-import CourseModulesDrawer from "./CourseModulesDrawer";
+import CourseModulesModal from "./CourseModulesModal";
 import { CourseDetailData, Course } from "../models/course";
 import MySuspense from "./MySuspense";
 import useSWR from "swr";
@@ -82,7 +82,7 @@ export default function CourseDetail(props: CourseDetailProps) {
   );
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [modulesDrawerOpen, setModulesDrawerOpen] = useState(false);
+  const [modulesModalOpen, setModulesModalOpen] = useState(false);
 
   useEffect(() => {
     if (!pageLoading) {
@@ -99,7 +99,7 @@ export default function CourseDetail(props: CourseDetailProps) {
 
   const handleChapterClick = useCallback((chapter: any) => {
     setSelectedChapter(chapter);
-    setModulesDrawerOpen(true);
+    setModulesModalOpen(true);
   }, []);
 
   return ( 
@@ -206,12 +206,12 @@ export default function CourseDetail(props: CourseDetailProps) {
             </List>
           </DialogContent>
         </Drawer>
-        {modulesDrawerOpen && (
-          <CourseModulesDrawer
+        {modulesModalOpen && (
+          <CourseModulesModal
             loading={drawerLoading}
             moduleName={selectedChapter.title}
             data={modulesData}
-            setOpen={setModulesDrawerOpen}
+            setOpen={setModulesModalOpen}
           />
         )}
         <Grid

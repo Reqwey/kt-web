@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
-import PaperProblem from "../components/PaperProblem";
+import ProblemList from "../components/ProblemList";
 import {
   InfoRounded,
   VisibilityOffRounded,
@@ -30,7 +30,7 @@ import {
   ListItemDecorator,
   ListItemContent,
 } from "@mui/joy";
-import { AnswerMap, PaperTree } from "../models/paper";
+import { PaperTree } from "../models/paper";
 import AttachmentList from "../components/AttachmentList";
 import { useNavigate, useParams } from "react-router-dom";
 import { getData, postData } from "../methods/fetch_data";
@@ -95,20 +95,7 @@ function PreviewListItem({
   question: PaperTree;
   showProper: boolean;
 }) {
-  const [userAnswer, setUserAnswer] = useState<string | undefined>();
   const answerMap = useAnswerMap();
-  const timerRef = useRef<number>();
-
-  useEffect(() => {
-    timerRef.current = window.setInterval(() => {
-      let newAnswer = answerMap.get(question.id);
-      if (newAnswer !== userAnswer) setUserAnswer(newAnswer);
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timerRef.current);
-    };
-  }, [answerMap]);
 
   return (
     <ListItem key={question.id} sx={{ mx: 0, px: 0 }}>
@@ -141,14 +128,14 @@ function PreviewListItem({
                   question.score
                 }分`}
               </Chip>
-              {userAnswer && (
+              {!!answerMap[question.id] && (
                 <Typography
                   variant="solid"
                   color="primary"
                   level="body-sm"
                   sx={{ borderRadius: "sm", px: 1 }}
                 >
-                  {userAnswer.split(":").join("")}
+                  {answerMap[question.id].split(":").join("")}
                 </Typography>
               )}
               {showProper && question.proper && (
@@ -176,32 +163,27 @@ function PreviewListItem({
   );
 }
 
-function PreviewCount({
-  answerMap,
-  totalCount,
-}: {
-  answerMap: AnswerMap;
-  totalCount: number;
-}) {
-  const [count, setCount] = useState<number>();
-  const timerRef = useRef<number>();
-
-  useEffect(() => {
-    timerRef.current = window.setInterval(() => {
-      setCount(answerMap.size);
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timerRef.current);
-    };
-  }, [answerMap]);
-
-  return (
-    <Typography level="title-md" color="primary">
-      {`${count}/${totalCount}`}
-    </Typography>
-  );
-}
+const PreviewList = memo(
+  ({
+    questions,
+    showProper,
+  }: {
+    questions: PaperTree[];
+    showProper: boolean;
+  }) => {
+    return (
+      <List sx={{ mx: 0, px: 0 }}>
+        {questions.map((question) => (
+          <PreviewListItem
+            key={question.id}
+            question={question}
+            showProper={showProper}
+          />
+        ))}
+      </List>
+    );
+  }
+);
 
 export default function TaskPaper() {
   const { taskId, paperId } = useParams();
@@ -222,7 +204,7 @@ export default function TaskPaper() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   const timeRef = useRef<Date>(new Date());
-  const answerMap = useRef<AnswerMap>(new Map<number, string>());
+  const [answerMap, setAnswerMap] = useState<any>(new Object());
 
   const { data, error, isLoading } = useSWR(
     `/api-paper/${paperId}`,
@@ -249,21 +231,25 @@ export default function TaskPaper() {
     answer: string,
     isMultiSelect: boolean
   ) => {
-    let newAnswer = answer;
+    setAnswerMap((answerMap: any) => {
+      const newAnswerMap = { ...answerMap };
+      let newAnswer = answer;
 
-    if (isMultiSelect) {
-      const previousAnswer = answerMap.current.get(id);
-      if (previousAnswer) {
-        let answerArray = previousAnswer.split(":");
-        if (answerArray.includes(answer))
-          answerArray = answerArray.filter((x) => x !== answer);
-        else answerArray = [...answerArray, answer].sort();
-        newAnswer = answerArray.join(":");
+      if (isMultiSelect) {
+        const previousAnswer = answerMap[id];
+        if (previousAnswer) {
+          let answerArray = previousAnswer.toString().split(":");
+          if (answerArray.includes(answer))
+            answerArray = answerArray.filter((x: string) => x !== answer);
+          else answerArray = [...answerArray, answer].sort();
+          newAnswer = answerArray.join(":");
+        }
       }
-    }
 
-    if (newAnswer) answerMap.current.set(id, newAnswer);
-    else answerMap.current.delete(id);
+      if (newAnswer) newAnswerMap[id] = newAnswer;
+      else newAnswerMap[id] = undefined;
+      return newAnswerMap;
+    });
   };
 
   const handleSubmit = useCallback(async () => {
@@ -279,14 +265,14 @@ export default function TaskPaper() {
               return {
                 id: y.id,
                 no: y.no,
-                answer: answerMap.current.get(y.id),
+                answer: answerMap[y.id],
               };
             }),
           };
         } else {
           return {
             ...tmp,
-            answer: answerMap.current.get(x.id),
+            answer: answerMap[x.id],
           };
         }
       });
@@ -326,10 +312,13 @@ export default function TaskPaper() {
       setSnackbarMessage(err.message);
       setSnackbarOpen(true);
     }
-  }, [questions]);
+  }, [answerMap, questions]);
 
   const handleCheck = () => {
-    if (answerMap.current.size < data.summary.totalCount && confirmModalOpen) {
+    if (
+      Object.keys(answerMap).length < data.summary.totalCount &&
+      confirmModalOpen
+    ) {
       setConfirmModalOpen(true);
     } else {
       handleSubmit();
@@ -412,18 +401,13 @@ export default function TaskPaper() {
                     )}
                     {!!questions && questions.length > 0 && (
                       <AnswerProvider
-                        answerMap={answerMap.current}
+                        answerMap={answerMap}
                         changeAnswer={handleAnswerChange}
                       >
-                        <List>
-                          {questions.map((item) => (
-                            <PaperProblem
-                              key={item.id}
-                              showProper={showProper}
-                              question={item}
-                            />
-                          ))}
-                        </List>
+                        <ProblemList
+                          showProper={showProper}
+                          questions={questions}
+                        />
                       </AnswerProvider>
                     )}
                   </Sheet>
@@ -449,10 +433,11 @@ export default function TaskPaper() {
                     bgcolor="background.body"
                     boxShadow="md"
                   >
-                    <PreviewCount
-                      answerMap={answerMap.current}
-                      totalCount={data.summary.totalCount || 0}
-                    />
+                    <Typography level="title-md" color="primary">
+                      {`${Object.keys(answerMap).length}/${
+                        data.summary.totalCount
+                      }`}
+                    </Typography>
 
                     <Button
                       size="sm"
@@ -483,18 +468,13 @@ export default function TaskPaper() {
                     {data.apiSummary}
                   </Alert>
                   <AnswerProvider
-                    answerMap={answerMap.current}
+                    answerMap={answerMap}
                     changeAnswer={handleAnswerChange}
                   >
-                    <List>
-                      {questions.map((question) => (
-                        <PreviewListItem
-                          key={question.id}
-                          question={question}
-                          showProper={showProper}
-                        />
-                      ))}
-                    </List>
+                    <PreviewList
+                      questions={questions}
+                      showProper={showProper}
+                    />
                   </AnswerProvider>
                 </Grid>
               </>
