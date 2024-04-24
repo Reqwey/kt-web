@@ -238,8 +238,7 @@ export default function Dashboard() {
           sn: localStorage.getItem("sn"),
           token: localStorage.getItem("token"),
         },
-      }),
-    { refreshInterval: 3000 }
+      })
   );
 
   useEffect(() => {
