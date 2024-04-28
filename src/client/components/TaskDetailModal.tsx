@@ -372,8 +372,8 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                             columns={{ xs: 2, sm: 4, md: 8 }}
                             sx={{ flexGrow: 1, pb: 6 }}
                           >
-                            {detailInfo.videos.map((v) => (
-                              <Grid xs={2} sm={4} md={4} key={v.id}>
+                            {detailInfo.videos.map((v, index) => (
+                              <Grid xs={2} sm={4} md={4} key={index}>
                                 <Card
                                   sx={{
                                     height: "min-content",
@@ -386,7 +386,10 @@ const TaskDetailModal: React.FC<TaskDetailModalOptions> = (props) => {
                                     bgcolor: "initial",
                                     p: 0,
                                   }}
-                                  onClick={() => setVideoUrl(v.video)}
+                                  onClick={() => {
+                                    console.log(v);
+                                    setVideoUrl(v.url);
+                                  }}
                                 >
                                   <Box sx={{ position: "relative" }}>
                                     <AspectRatio ratio="3/2">

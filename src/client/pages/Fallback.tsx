@@ -1,6 +1,7 @@
 import { CancelTwoTone, RefreshTwoTone } from "@mui/icons-material";
-import { Button, Sheet, Typography } from "@mui/joy";
+import { Box, Button, Sheet, Typography } from "@mui/joy";
 import { FallbackProps } from "react-error-boundary";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Fallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
@@ -17,16 +18,26 @@ export default function Fallback({ error, resetErrorBoundary }: FallbackProps) {
         flexDirection: "column",
       }}
     >
-      <CancelTwoTone color="error" sx={{ fontSize: "200px", my: 2 }} />
-      <Typography level="h1" color="danger">
-        我们遇到了一个错误
+      <Typography
+        level="h1"
+        color="danger"
+        startDecorator={
+          <CancelTwoTone color="error" sx={{ fontSize: "80px" }} />
+        }
+        sx={{ fontSize: "50px" }}
+      >
+        Kunter 遇到了一个错误
       </Typography>
-      <Typography level="body-md" sx={{ my: 2 }}>
-        {error.message}
-      </Typography>
+      <Box m={2}>
+        <code>
+          {(error.stack as string).split("\n").map((line) => (
+            <div>{line}</div>
+          ))}
+        </code>
+      </Box>
       <Button
         variant="outlined"
-        onClick={() => resetErrorBoundary()}
+        onClick={() => window.location.reload()}
         startDecorator={<RefreshTwoTone />}
       >
         刷新页面

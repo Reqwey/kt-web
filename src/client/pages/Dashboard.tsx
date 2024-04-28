@@ -37,7 +37,6 @@ import {
 
 import ColorSchemeToggle from "../components/ColorSchemeToggle";
 import TaskList from "../components/TaskList";
-import TaskDetailModal from "../components/TaskDetailModal";
 import SubjectList from "../components/SubjectList";
 
 import config from "../../../package.json";
@@ -118,7 +117,7 @@ const SearchModal: React.FC<SearchModalProps> = (props) => {
             sx={{ fontWeight: "md", color: "text.secondary" }}
           >{`第 ${page} 页`}</Typography>
           <Button
-            disabled={isLoading || !data.next}
+            disabled={isLoading || !data || !data.next}
             size="sm"
             color="primary"
             variant="plain"
@@ -340,10 +339,12 @@ export default function Dashboard() {
         open={!!error}
         startDecorator={<Report fontSize="large" />}
       >
-        <div>
+        {!!error && <div>
           <Typography level="title-lg">获取数据失败</Typography>
-          <Typography sx={{ mt: 1, mb: 2 }}>{error}</Typography>
-        </div>
+          <Box mt={1} mb={2}>
+            <code>{error.message}</code>
+          </Box>
+        </div>}
       </Snackbar>
       <SearchModal open={searchModalOpen} setOpen={setSearchModalOpen} />
       <InfoModal open={infoModalOpen} setOpen={setInfoModalOpen} />
@@ -581,9 +582,9 @@ export default function Dashboard() {
                 ))}
               </RadioGroup>
               <Button
-                disabled={isLoading || !data.next}
+                disabled={isLoading || !data || !data.next}
                 size="sm"
-                color={isLoading || !data.next ? "neutral" : "primary"}
+                color={isLoading || !data || !data.next ? "neutral" : "primary"}
                 variant="plain"
                 endDecorator={<ArrowForwardIosRounded />}
                 onClick={() => {

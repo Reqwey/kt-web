@@ -281,8 +281,8 @@ const TaskList: React.FC<TaskListProps> = (props) => {
 
   return data.length > 0 ? (
     <List>
-      {data.map((task: TaskListItem) => (
-        <TaskListCell task={task} />
+      {data.map((task: TaskListItem, index) => (
+        <TaskListCell key={index} task={task} />
       ))}
     </List>
   ) : (

@@ -1,4 +1,6 @@
-import { CourseAttachment, CourseVideo } from "./course";
+import { CourseAttachment } from "./course";
+
+export type TaskAttachment = CourseAttachment;
 
 export type TaskInfo = {
 	taskId: number;
@@ -23,11 +25,18 @@ export interface TaskModule {
 	exerciseId: number;
 }
 
+export interface TaskVideo {
+	title: string;
+	videoId: number;
+	url: string;
+	cover: string;
+}
+
 export interface TaskDetail {
 	title: string | null;
 	content: string | null;
-	attachments: CourseAttachment[];
-	videos: CourseVideo[];
+	attachments: TaskAttachment[];
+	videos: TaskVideo[];
 	paperId: number | null | undefined;
 	taskDetailId: number;
 	task: {

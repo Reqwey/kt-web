@@ -100,7 +100,7 @@ app.get("/api-unfinished-counts", useHeaders, async (req, res) => {
     res.json({ ...response.data, success: true });
   } catch (error: any) {
     // console.log("Error fetching unfinished counts:", error.message);
-    res.json({ subjects: [], success: false });
+    res.status(400).json({ subjects: [], success: false });
   }
 });
 
@@ -165,7 +165,7 @@ app.get("/api-task-info/:taskId", useHeaders, async (req, res) => {
     }
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(400).json([]);
   }
 });
 
@@ -179,7 +179,7 @@ app.post("/api-task-favorite", useHeaders, async (req, res) => {
     res.status(200);
   } catch (error: any) {
     console.log(error);
-    res.json({ success: false, detail: error });
+    res.status(400).json({ success: false, detail: error });
   }
 });
 
@@ -194,7 +194,7 @@ app.get("/api-paper/:paperId", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(400).json([]);
   }
 });
 
@@ -209,7 +209,7 @@ app.get("/api-exercise/:exerciseId", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(400).json([]);
   }
 });
 
@@ -233,7 +233,7 @@ app.get("/api-courses/:mode", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json([]);
+    res.status(400).json([]);
   }
 });
 
@@ -249,7 +249,7 @@ app.get("/api-course-detail/:id", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json({});
+    res.status(400).json({});
   }
 });
 
@@ -265,7 +265,7 @@ app.get("/api-course-detail-chapters/:id", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json({});
+    res.status(400).json({});
   }
 });
 
@@ -284,7 +284,7 @@ app.get(
       res.json(response.data);
     } catch (error: any) {
       console.log(error);
-      res.json({});
+      res.status(400).json({});
     }
   }
 );
@@ -301,7 +301,7 @@ app.post("/api-mark-finish", useHeaders, async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.log(error);
-    res.json({});
+    res.status(400).json({});
   }
 });
 
