@@ -1,4 +1,11 @@
-import { memo, useCallback, useDeferredValue, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Chip from "@mui/joy/Chip";
 import Sheet from "@mui/joy/Sheet";
 import List from "@mui/joy/List";
@@ -21,98 +28,128 @@ import { Choice, PaperTree } from "../models/paper";
 import { useAnswerChange, useAnswerMap } from "./AnswerProvider";
 import VideoCard from "./VideoCard";
 
-const Choices = memo(function Choices(props: {
-  questionId: number;
-  choices: Choice[];
-  showProper: boolean;
-  proper: string | undefined;
-  updatedChoice: string;
-  isMultiSelect: boolean;
-  handleAnswerChange: (id: number, value: any, isMultiSelect: boolean) => void;
-}) {
-  const {
-    questionId,
-    choices,
-    showProper,
-    updatedChoice,
-    proper,
-    isMultiSelect,
-    handleAnswerChange,
-  } = props;
-  const [selectedChoice, setSelectedChoice] = useState(updatedChoice);
+const Choices = memo(
+  (props: {
+    questionId: number;
+    choices: Choice[];
+    showProper: boolean;
+    proper: string | undefined;
+    updatedChoice: string;
+    isMultiSelect: boolean;
+    handleAnswerChange: (
+      id: number,
+      value: any,
+      isMultiSelect: boolean
+    ) => void;
+  }) => {
+    const {
+      questionId,
+      choices,
+      showProper,
+      updatedChoice,
+      proper,
+      isMultiSelect,
+      handleAnswerChange,
+    } = props;
+    const [selectedChoice, setSelectedChoice] = useState(updatedChoice);
 
-  return (
-    <List
-      sx={{
-        width: "100%",
-      }}
-    >
-      {choices.map((choice) => (
-        <ListItem key={`${choice.answer}`} sx={{ py: 0.25 }}>
-          <ListItemButton
-            selected={
-              showProper
-                ? (proper || ":").split(":").includes(choice.answer)
-                : selectedChoice.split(":").includes(choice.answer)
-            }
-            color={
-              showProper
-                ? (proper || ":").split(":").includes(choice.answer)
-                  ? "success"
-                  : undefined
-                : selectedChoice.split(":").includes(choice.answer)
-                ? "primary"
-                : undefined
-            }
-            onClick={() => {
-              if (!showProper) {
-                setSelectedChoice((prevChoice: string) => {
-                  let newChoice = choice.answer;
-
-                  if (isMultiSelect && prevChoice) {
-                    let answerArray = prevChoice.split(":");
-
-                    if (answerArray.includes(choice.answer))
-                      answerArray = answerArray.filter(
-                        (x: string) => x !== choice.answer
-                      );
-                    else answerArray = [...answerArray, choice.answer].sort();
-
-                    newChoice = answerArray.join(":");
-                  }
-
-                  return newChoice;
-                });
-                handleAnswerChange(questionId, choice.answer, isMultiSelect);
+    return (
+      <List
+        sx={{
+          width: "100%",
+        }}
+      >
+        {choices.map((choice) => (
+          <ListItem key={`${choice.answer}`} sx={{ py: 0.25 }}>
+            <ListItemButton
+              selected={
+                showProper
+                  ? (proper || ":").split(":").includes(choice.answer)
+                  : selectedChoice.split(":").includes(choice.answer)
               }
-            }}
-            sx={{ py: 0, my: 0, borderRadius: "sm" }}
-          >
-            <ListItemDecorator>{choice.answer}</ListItemDecorator>
-            <ListItemContent>
-              <div
-                className="KtContent"
-                style={{
-                  width: "100%",
-                  wordBreak: "break-all",
-                  overflowWrap: "break-word",
-                }}
-                dangerouslySetInnerHTML={{ __html: choice.content }}
-              ></div>
-            </ListItemContent>
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
-  );
-});
+              color={
+                showProper
+                  ? (proper || ":").split(":").includes(choice.answer)
+                    ? "success"
+                    : undefined
+                  : selectedChoice.split(":").includes(choice.answer)
+                  ? "primary"
+                  : undefined
+              }
+              onClick={() => {
+                if (!showProper) {
+                  setSelectedChoice((prevChoice: string) => {
+                    let newChoice = choice.answer;
+
+                    if (isMultiSelect && prevChoice) {
+                      let answerArray = prevChoice.split(":");
+
+                      if (answerArray.includes(choice.answer))
+                        answerArray = answerArray.filter(
+                          (x: string) => x !== choice.answer
+                        );
+                      else answerArray = [...answerArray, choice.answer].sort();
+
+                      newChoice = answerArray.join(":");
+                    }
+
+                    return newChoice;
+                  });
+                  handleAnswerChange(questionId, choice.answer, isMultiSelect);
+                }
+              }}
+              sx={{ py: 0, my: 0, borderRadius: "sm" }}
+            >
+              <ListItemDecorator>{choice.answer}</ListItemDecorator>
+              <ListItemContent>
+                <div
+                  className="KtContent"
+                  style={{
+                    width: "100%",
+                    wordBreak: "break-all",
+                    overflowWrap: "break-word",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: choice.content }}
+                ></div>
+              </ListItemContent>
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    );
+  }
+);
+
+const ProblemInput = memo(
+  (props: {
+    questionId: number;
+    handleAnswerChange: (
+      id: number,
+      value: any,
+      isMultiSelect: boolean
+    ) => void;
+  }) => {
+    const { questionId, handleAnswerChange } = props;
+    const [inputValue, setInputValue] = useState("");
+
+    return (
+      <Input
+        value={inputValue}
+        onChange={(event) => {
+          setInputValue(event.target.value);
+          handleAnswerChange(questionId, event.target.value, false);
+        }}
+      />
+    );
+  }
+);
 
 interface ProblemProps {
   question: PaperTree;
   showProper: boolean;
 }
 
-function Problem(props: ProblemProps) {
+const ProblemListItem = memo((props: ProblemProps) => {
   const { question, showProper } = props;
 
   const answerMap = useAnswerMap();
@@ -212,10 +249,9 @@ function Problem(props: ProblemProps) {
           )}
         {question.model === 2 &&
           (question.subModel === 2 ? (
-            <Input
-              onChange={(event) =>
-                handleAnswerChange(question.id, event.target.value, false)
-              }
+            <ProblemInput
+              questionId={question.id}
+              handleAnswerChange={handleAnswerChange}
             />
           ) : (
             <Alert>暂不支持提交。</Alert>
@@ -272,17 +308,15 @@ function Problem(props: ProblemProps) {
       </Sheet>
     </ListItem>
   );
-}
+});
 
 interface ProblemListProps {
   questions: PaperTree[];
   showProper: boolean;
 }
 
-function ProblemList(props: ProblemListProps) {
+const ProblemList = memo((props: ProblemListProps) => {
   const { questions, showProper } = props;
-  const ProblemListItem = memo(Problem);
-
   return (
     <List>
       {questions.map((item) => (
@@ -294,6 +328,6 @@ function ProblemList(props: ProblemListProps) {
       ))}
     </List>
   );
-}
+});
 
-export default memo(ProblemList);
+export default ProblemList;
